@@ -170,6 +170,33 @@ class Cascade(object):
 ###############################################################################
 ###############################################################################
 ###############################################################################
+	def getListOfUsedPartitions(self):
+		def rekParts(self, listNow):
+			n = set()
+			for i in listNow:
+				s = self._getPartitionIdForSlot(i)
+				n.add(s)
+				if (i == 0): return n
+			return n.union(rekParts(self, n))
+				
+		p = rekParts(self, self.keySlotMapper.getUsedList())
+		return p
+
+	
+	def getFullReverseMapping(self):
+		result = dict()
+		for objName, objKeySlot in self.keySlotMapper.getMappingDict().items():
+			objKeyPartition = self._getPartitionIdForSlot(objKeySlot)
+			slotInPartition = self._slotToLocalSlot(objKeySlot)
+			#print(objName, objKeySlot, objKeyPartition, slotInPartition)
+			partition = result.get(objKeyPartition, [])			
+			partition.append({"slot":slotInPartition, "objName":objName})
+			result[objKeyPartition] = partition
+		return result
+	
+###############################################################################
+###############################################################################
+###############################################################################
 class KeyPartition(object):
 	'''
 	classdocs

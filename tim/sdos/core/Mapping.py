@@ -34,6 +34,13 @@ class KeySlotMapper(object):
 	
 	def finish(self):
 		self.storeMapping()
+		
+	
+	def getMappingDict(self):
+		return self.mapping
+	
+	def getUsedList(self):
+		return self.usedList
 			
 ###############################################################################
 ###############################################################################
