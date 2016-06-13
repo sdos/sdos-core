@@ -1,62 +1,71 @@
-'''
-Created on Sep 10, 2015
+#!/usr/bin/python
+# coding=utf-8
 
-@author: tim
-'''
+"""
+	Project MCM - Micro Content Management
+	SDOS - Secure Delete Object Store
+
+
+	Copyright (C) <2016> Tim Waizenegger, <University of Stuttgart>
+
+	This software may be modified and distributed under the terms
+	of the MIT license.  See the LICENSE file for details.
+"""
+
 import logging
 import io
 from tim.sdos.core.Configuration import *
+
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 class KeySlotMapper(object):
-	'''
-	here we store and manage the mapping between keys (identified by object IDs/object names) 
+	"""
+	here we store and manage the mapping between keys (identified by object IDs/object names)
 	and slots in the object-key-partitions
-	'''
-	
+	"""
+
 	def __init__(self, mappingStore):
-		'''
+		"""
 		the mapping dict stores all the used slots in the partitions
 		the used/free lists are derived from this and don't get stored
-		'''
+		"""
 		self.log = logging.getLogger(__name__)
 		self.mapping = dict()
 		self.usedList = set()
 		# self.freeList = dict() # no free list used ATM
 		self.mappingStore = mappingStore
 		self.readMapping()
-		
+
 	def _populateUsedList(self):
 		for t in self.mapping.values():
 			self.usedList.add(t)
-	
+
 	def finish(self):
 		self.storeMapping()
-		
-	
+
 	def getMappingDict(self):
 		return self.mapping
-	
+
 	def getUsedList(self):
 		return self.usedList
-			
-###############################################################################
-###############################################################################
+
+	###############################################################################
+	###############################################################################
 	def findFreeSlot(self):
 		for slot in range(FIRST_OBJECT_KEY_SLOT, LAST_OBJCT_KEY_SLOT + 1):
 			if slot not in self.usedList:
 				return slot
-			
 
 		raise SystemError('no more free key slots available')
-	
+
 	def setMapping(self, name, slot):
 		self.mapping[str(name)] = slot
 		self.usedList.add(slot)
-		# self.log.info('set mapping: {} {}, {} {}'.format(name, type(name), slot, type(slot)))
-		
+
+	# self.log.info('set mapping: {} {}, {} {}'.format(name, type(name), slot, type(slot)))
+
 	def getOrCreateMapping(self, name):
 		if name in self.mapping:
 			slot = self.getMapping(name)
@@ -64,18 +73,18 @@ class KeySlotMapper(object):
 			slot = self.findFreeSlot()
 			self.setMapping(name, slot)
 		return slot
-		
+
 	def getMapping(self, name):
 		return self.mapping[name]
-	
+
 	def resetMapping(self, name):
 		slot = self.mapping.pop(name)
 		self.usedList.remove(slot)
 		return slot
-	
-###############################################################################
-###############################################################################
-	
+
+	###############################################################################
+	###############################################################################
+
 	def serializeToBytesIO(self):
 		# format: <len(ids)><len(name)><name><id>...<len(name)><name><id>...
 		by = io.BytesIO()
@@ -86,14 +95,13 @@ class KeySlotMapper(object):
 			by.write(v.to_bytes(length=BYTES_FOR_SLOT_IDS, byteorder='little', signed=False))
 		by.seek(0)
 		return by
-	
-	
+
 	def deserializeFromBytesIO(self, by):
 		by.seek(0)
 		idLen = int.from_bytes(by.read(1), byteorder='little', signed=False)
 		if (idLen != BYTES_FOR_SLOT_IDS):
 			raise SystemError('error parsing mapping: ID byte length mismatch')
-		while(True):
+		while (True):
 			keyLength = int.from_bytes(by.read(BYTES_FOR_NAME_LENGTH), byteorder='little', signed=False)
 			if not keyLength:
 				break
@@ -102,18 +110,14 @@ class KeySlotMapper(object):
 			# self.log.debug('read mapping: {},{}'.format(key, value))
 			self.setMapping(key, value)
 
-		
 		by.close()
-		
-		
+
 	def storeMapping(self):
 		self.mappingStore.writeMapping(self.serializeToBytesIO())
-	
+
 	def readMapping(self):
 		by = self.mappingStore.readMapping()
 		if by:
 			self.deserializeFromBytesIO(by)
 		else:
 			self.log.error('retrieved no stored mapping. starting empty...')
-		
-

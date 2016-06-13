@@ -1,16 +1,20 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-'''
-Created on Mar 19, 2015
+# coding=utf-8
 
-@author: tim
-'''
+"""
+	Project MCM - Micro Content Management
+	SDOS - Secure Delete Object Store
+
+
+	Copyright (C) <2016> Tim Waizenegger, <University of Stuttgart>
+
+	This software may be modified and distributed under the terms
+	of the MIT license.  See the LICENSE file for details.
+"""
+
 from sys import argv
 import io
 from tim.sdos.crypto.CryptoLib import CryptoLib
-
-
-
 
 if __name__ == '__main__':
 	print("SDOS decrypt tool")
@@ -18,10 +22,10 @@ if __name__ == '__main__':
 	print("tool will create a new file with the decrypted content")
 	print(argv[1])
 	print(argv[2])
-	
+
 	keyString = argv[1]
 	filePath = argv[2]
-	
+
 	cl = CryptoLib()
 	cl.setKeyString(keyString)
 	f = open(filePath, 'b+r')
@@ -31,4 +35,3 @@ if __name__ == '__main__':
 	f2 = open(filePath + '_decrypted', 'b+w')
 	f2.write(dec.getvalue())
 	f2.close()
-	
