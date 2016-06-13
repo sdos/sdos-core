@@ -56,6 +56,8 @@ coverage.xml
 docs/_build/
 
 # PyBuilder
+.idea/
 target/
 venvSDOS/
 
+/.idea/
