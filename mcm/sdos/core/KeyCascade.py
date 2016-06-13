@@ -12,13 +12,10 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
-
 import io
-# from mcm.sdos.core import Mapping, CascadePersistence
 from mcm.sdos.crypto.PartitionCrypt import PartitionCrypt
 from mcm.sdos.crypto import CryptoLib
-from mcm.sdos.core.Configuration import *
+from mcm.sdos.configuration import *
 
 
 ###############################################################################

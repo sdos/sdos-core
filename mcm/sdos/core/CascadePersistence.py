@@ -14,7 +14,7 @@
 
 import logging
 import io
-from mcm.sdos.core import Configuration
+from mcm.sdos import configuration
 from swiftclient import ClientException
 
 
@@ -65,7 +65,7 @@ class LocalFilePartitionStore(object):
 		self.log = logging.getLogger(__name__)
 		self.outerHeader = 'SDOS_PART_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
 		# encrypted partitions already have a header from the CryptoLib. This header should be omitted in new implementations
-		self.fileName = Configuration.CASCADE_FILE_PATH + '/partition_{}.sdos'
+		self.fileName = configuration.CASCADE_FILE_PATH + '/partition_{}.sdos'
 
 	def writePartition(self, partitionId, by):
 		with open(self.fileName.format(partitionId), mode='wb') as f:

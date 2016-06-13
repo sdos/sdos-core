@@ -18,9 +18,9 @@ import io
 import time
 import statistics
 from mcm.sdos.core import Frontend
+from mcm.sdos import configuration
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
-# logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
+logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
 log = logging.getLogger()
 
 

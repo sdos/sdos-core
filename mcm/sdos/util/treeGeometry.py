@@ -15,7 +15,7 @@
 import json
 import logging
 
-from mcm.sdos.core import Configuration
+from mcm.sdos import configuration
 
 log = logging.getLogger()
 
@@ -33,8 +33,8 @@ class TreeGeometry(object):
 
 def getGeometry(cascade):
 	g = {
-		"levels": Configuration.TREE_HEIGHT + 1,
-		"partitionSize": Configuration.PARTITION_SIZE,
+		"levels": configuration.TREE_HEIGHT + 1,
+		"partitionSize": configuration.PARTITION_SIZE,
 		# "usedSlots": cascade.keySlotMapper.usedList,
 		"usedPartitions": cascade.getListOfUsedPartitions(),
 		"objectMapping": cascade.getFullReverseMapping()

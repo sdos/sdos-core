@@ -14,7 +14,7 @@
 
 import logging
 import io
-from mcm.sdos.core.Configuration import *
+from mcm.sdos.configuration import *
 
 
 ###############################################################################

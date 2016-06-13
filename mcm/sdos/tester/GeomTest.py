@@ -17,9 +17,9 @@ import sys
 
 from mcm.sdos.core import Frontend
 from mcm.sdos.util import treeGeometry
+from mcm.sdos import configuration
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
-# logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
+logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
 log = logging.getLogger()
 
 ###############################################################################
@@ -34,4 +34,4 @@ if __name__ == '__main__':
 	frontend = Frontend.SdosFrontend(containerName='sdosTest1')
 	cascade = frontend.cascade
 
-	log.info(treeGeometry.getGeometry(cascade=cascade))
+	log.warning(treeGeometry.getGeometry(cascade=cascade))

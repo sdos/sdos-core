@@ -14,7 +14,7 @@
 
 import logging
 import io
-from mcm.sdos.core import Configuration
+from mcm.sdos import configuration
 from swiftclient import ClientException
 
 
@@ -33,7 +33,7 @@ class LocalFileMappingStore(object):
 		"""
 		self.log = logging.getLogger(__name__)
 		self.outerHeader = 'SDOS_MAPP_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
-		self.fileName = Configuration.CASCADE_FILE_PATH + '/mapping.sdos'
+		self.fileName = configuration.CASCADE_FILE_PATH + '/mapping.sdos'
 
 	def writeMapping(self, by):
 		with open(self.fileName, mode='wb') as f:
