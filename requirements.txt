@@ -1,0 +1,5 @@
+futures==3.0.5
+pycrypto==2.6.1
+python-swiftclient==3.0.0
+requests==2.10.0
+six==1.10.0
