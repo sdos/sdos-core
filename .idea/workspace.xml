@@ -5,27 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ba8a01e4-f4f5-4370-9d86-502fb0e49503" name="Default" comment="refactoring">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/python" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/python3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/python3.5" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/activate" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/activate.csh" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/activate.fish" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/activate_this.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/easy_install" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/easy_install-3.5" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/pip" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/pip3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/pip3.5" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/python-config" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/swift" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/venvsdos/bin/wheel" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/mcm-sdos.iml" afterPath="$PROJECT_DIR$/.idea/mcm-sdos.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/setenv.sh" afterPath="$PROJECT_DIR$/setenv.sh" />
     </list>
     <ignored path="osecm-sdos.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -656,14 +637,21 @@
       <option name="project" value="LOCAL" />
       <updated>1465816280183</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="venv fix">
+      <created>1465817015567</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1465817015567</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="1600" y="174" width="1680" height="1026" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1625" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1625" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -696,7 +684,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="refactoring" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactoring" />
+    <MESSAGE value="venv fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="venv fix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
