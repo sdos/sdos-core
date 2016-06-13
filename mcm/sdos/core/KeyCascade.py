@@ -15,10 +15,10 @@
 import logging
 
 import io
-# from tim.sdos.core import Mapping, CascadePersistence
-from tim.sdos.crypto.PartitionCrypt import PartitionCrypt
-from tim.sdos.crypto import CryptoLib
-from tim.sdos.core.Configuration import *
+# from mcm.sdos.core import Mapping, CascadePersistence
+from mcm.sdos.crypto.PartitionCrypt import PartitionCrypt
+from mcm.sdos.crypto import CryptoLib
+from mcm.sdos.core.Configuration import *
 
 
 ###############################################################################

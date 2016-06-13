@@ -15,8 +15,8 @@
 import logging
 import sys
 
-from tim.sdos.core import Frontend
-from tim.sdos.util import treeGeometry
+from mcm.sdos.core import Frontend
+from mcm.sdos.util import treeGeometry
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
 # logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')

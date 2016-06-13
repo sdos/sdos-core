@@ -14,7 +14,7 @@
 
 import logging
 import io
-from tim.sdos.core import Configuration
+from mcm.sdos.core import Configuration
 from swiftclient import ClientException
 
 

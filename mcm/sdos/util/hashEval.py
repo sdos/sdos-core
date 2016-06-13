@@ -12,8 +12,8 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-from tim.sdos.core import KeyCascade
-from tim.sdos.core.PartitionStore import PartitionStore
+from mcm.sdos.core import KeyCascade
+from mcm.sdos.core.PartitionStore import PartitionStore
 
 if __name__ == 'xx__main__':
 	hvals = dict()

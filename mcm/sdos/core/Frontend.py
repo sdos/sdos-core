@@ -19,11 +19,11 @@
 	This module contains SDOS-frontends, i.e. the classes that offer access to SDOS
 	the frontends will then use methods from the SDOS core and finally use a backend to store/retrieve data
 """
-from tim.sdos.swift import SwiftBackend
-from tim.sdos.crypto.DataCrypt import DataCrypt
-from tim.sdos.crypto import CryptoLib
-from tim.sdos.core.KeyCascade import Cascade
-from tim.sdos.core import Mapping, CascadePersistence, MappingPersistence
+from mcm.sdos.swift import SwiftBackend
+from mcm.sdos.crypto.DataCrypt import DataCrypt
+from mcm.sdos.crypto import CryptoLib
+from mcm.sdos.core.KeyCascade import Cascade
+from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
 
 
 class DirectFrontend(object):

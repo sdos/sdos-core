@@ -17,7 +17,7 @@ import sys
 import io
 import time
 import statistics
-from tim.sdos.core import Frontend
+from mcm.sdos.core import Frontend
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')
 # logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s')

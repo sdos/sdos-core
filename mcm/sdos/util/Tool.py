@@ -14,7 +14,7 @@
 
 from sys import argv
 import io
-from tim.sdos.crypto.CryptoLib import CryptoLib
+from mcm.sdos.crypto.CryptoLib import CryptoLib
 
 if __name__ == '__main__':
 	print("SDOS decrypt tool")

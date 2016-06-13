@@ -15,7 +15,7 @@
 import json
 import logging
 
-from tim.sdos.core import Configuration
+from mcm.sdos.core import Configuration
 
 log = logging.getLogger()
 

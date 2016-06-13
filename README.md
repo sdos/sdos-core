@@ -4,8 +4,8 @@ The Secure Delete Object Store
 ## How to use
 you can either manually run one of the test/experimental classes:
 
-    tim/sdos/tester/PerfTest.py
-    tim/sdos/tester/GeomTest.py
+    mcm/sdos/tester/PerfTest.py
+    mcm/sdos/tester/GeomTest.py
 
 
 or run it as a service...
@@ -16,7 +16,7 @@ or run it as a service...
 ### configuration
 is currently done by setting parameters in
 
-     tim/sdos/core/Configuration.py
+     mcm/sdos/core/Configuration.py
 
 
 ## Dev setup
@@ -42,7 +42,7 @@ in the main directory
 
 
     . setenv.sh
-    python tim/sdos/tester/PerfTest.py
+    python mcm/sdos/tester/PerfTest.py
     (or any other class...)
     
     

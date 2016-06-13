@@ -13,10 +13,10 @@
 """
 
 import logging
-from tim.sdos.crypto.CryptoLib import CryptoLib
+from mcm.sdos.crypto.CryptoLib import CryptoLib
 
 
-class PartitionCrypt(object):
+class DataCrypt(object):
 	"""
 	classdocs
 	"""
@@ -28,7 +28,7 @@ class PartitionCrypt(object):
 		self.log = logging.getLogger(__name__)
 		self.log.debug('initializing')
 		self.key = key
-		self.cl = CryptoLib(key, 'SDOS_ENCPART_V1\0'.encode(encoding='utf_8', errors='strict'))
+		self.cl = CryptoLib(key, 'SDOS_ENCO_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict'))
 
 	###############################################################################
 	###############################################################################
@@ -38,9 +38,9 @@ class PartitionCrypt(object):
 	###############################################################################
 	###############################################################################
 	def encryptBytesIO(self, plaintext):
-		self.log.debug('encrypting partition with key: {}'.format(self.key))
+		self.log.debug('encrypting data with key: {}'.format(self.key))
 		return self.cl.encryptBytesIO(plaintext)
 
 	def decryptBytesIO(self, ciphertext):
-		self.log.debug('decrypting partition with key: {}'.format(self.key))
+		self.log.debug('decrypting data with key: {}'.format(self.key))
 		return self.cl.decryptBytesIO(ciphertext)
