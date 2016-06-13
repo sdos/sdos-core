@@ -25,9 +25,9 @@ make sure to specify a python 3 or higher interpreter for your virtualenv (SDOS 
 in the main directory
 
 
-    virtualenv venvsdos
+    virtualenv venvSDOS
     . setenv.sh
-    (included in setenv) source venvsdos/bin/activate
+    (included in setenv) source venvSDOS/bin/activate
     pip install -r requirements.txt
     
 

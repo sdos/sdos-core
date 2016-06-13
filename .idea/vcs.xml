@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../mcm-metadataExtractor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../mcm-metadataExtractor" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../mcm-retentionManager" vcs="Git" />
   </component>
 </project>

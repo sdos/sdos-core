@@ -2,6 +2,6 @@
 
 
 p=$(pwd)
-export PYTHONPATH=$PYTHONPATH:$p/osecm
+export PYTHONPATH=$PYTHONPATH:$p/mcm
 
-source venvsdos/bin/activate
+source venvSDOS/bin/activate
