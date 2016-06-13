@@ -2,6 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../mcm-bluebox" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../mcm-metadataExtractor" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../mcm-metadataExtractor" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../mcm-retentionManager" vcs="Git" />

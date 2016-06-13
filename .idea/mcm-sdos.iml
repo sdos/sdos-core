@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="mcm-retentionManager" />
     <orderEntry type="module" module-name="mcm-metadataExtractor" />
     <orderEntry type="module" module-name="mcm-metadataExtractor" />
+    <orderEntry type="module" module-name="mcm-bluebox" />
   </component>
   <component name="TestRunnerService">
     <option name="projectConfiguration" value="py.test" />
