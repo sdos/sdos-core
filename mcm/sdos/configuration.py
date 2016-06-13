@@ -18,7 +18,7 @@
 	This is the configuration file for the SDOS core and service components
 """
 
-import logging, math
+import logging, math, os
 
 
 ###############################################################################
@@ -39,7 +39,8 @@ log_format = '%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s'
 swift_auth_url = "http://192.168.209.204:8080/auth/v1.0"
 swift_storage_url = "http://192.168.209.204:8080/v1/AUTH_{}"
 proxy_storage_url = "http://localhost:3000/v1/AUTH_{}"
-
+netPortDev = os.getenv("VCAP_APP_PORT", "3000")
+netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
 
 ###############################################################################
 """

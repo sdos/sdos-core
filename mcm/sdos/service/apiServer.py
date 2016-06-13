@@ -15,8 +15,9 @@
 import logging
 from functools import wraps
 from flask import request, Response
-from mcm.retentionManager import app, httpBackend, appConfig, retentionFilter
-from mcm.retentionManager.Exceptions import HttpError
+from mcm.sdos import configuration
+from mcm.sdos.service.Exceptions import HttpError
+from mcm.sdos.service import httpBackend, app
 
 """WSGI application for the proxy server."""
 
@@ -40,10 +41,10 @@ def log_requests(f):
 ##############################################################################
 def replaceStorageUrl(swiftResponse):
 	swiftUrl = swiftResponse['X-Storage-Url']
-	if not swiftUrl.startswith(appConfig.swift_storage_url.format("")):
+	if not swiftUrl.startswith(configuration.swift_storage_url.format("")):
 		raise HttpError("swift returned wrong storage URL")
-	swiftAuthName = swiftUrl[len(appConfig.swift_storage_url.format("")):]
-	swiftResponse['X-Storage-Url'] = appConfig.proxy_storage_url.format(swiftAuthName)
+	swiftAuthName = swiftUrl[len(configuration.swift_storage_url.format("")):]
+	swiftResponse['X-Storage-Url'] = configuration.proxy_storage_url.format(swiftAuthName)
 
 
 ##############################################################################
@@ -88,7 +89,7 @@ def handle_auth():
 @app.route("/v1/AUTH_<thisAuth>", methods=["HEAD", "POST", "GET", "PUT", "DELETE"])
 @log_requests
 def handle_account(thisAuth):
-	myUrl = appConfig.swift_storage_url.format(thisAuth)
+	myUrl = configuration.swift_storage_url.format(thisAuth)
 	log.debug(
 		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,
 		                                                                request.data))
@@ -105,7 +106,7 @@ def handle_account(thisAuth):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE"])
 @log_requests
 def handle_container(thisAuth, thisContainer):
-	myUrl = appConfig.swift_storage_url.format(thisAuth)
+	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer
 	log.debug(
 		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,
@@ -122,9 +123,8 @@ def handle_container(thisAuth, thisContainer):
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "GET", "PUT", "DELETE"])
 @log_requests
-@retentionFilter.checkRetentionDate
 def handle_object(thisAuth, thisContainer, thisObject):
-	myUrl = appConfig.swift_storage_url.format(thisAuth)
+	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
 	log.debug(
 		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,

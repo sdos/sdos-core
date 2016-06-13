@@ -12,13 +12,17 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-
-import logging
-from flask import Flask
+from mcm.sdos.service import app
 from mcm.sdos import configuration
 
-logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
-log = logging.getLogger()
 
-app = Flask(__name__)
-import mcm.sdos.service.apiServer
+"""
+	Without threading, the server is too slow to serve clients. Requests are missed...
+"""
+
+app.run(
+			host=configuration.netHostDev,
+			port=int(configuration.netPortDev),
+			debug=True,
+			threaded=True
+)

@@ -13,7 +13,7 @@
 """
 import logging
 import requests
-from mcm.retentionManager import appConfig
+from mcm.sdos import configuration
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def stripHeaders(headers):
 def doAuthGetToken(reqHead):
 	reqHead = stripHeaders(headers=reqHead)
 	log.debug("doAuthGetToken {}".format(reqHead))
-	r = requests.get(url=appConfig.swift_auth_url, headers=reqHead)
+	r = requests.get(url=configuration.swift_auth_url, headers=reqHead)
 	b = r.content
 	h = dict(r.headers)
 	s = r.status_code
