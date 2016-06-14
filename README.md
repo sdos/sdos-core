@@ -7,14 +7,17 @@ The Secure Delete Object Store (SDOS) implements a key management mechanism that
 SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. SDOS can be used with any unmodified Swift client and server.
 
 ## How to use
-you can either manually run one of the test/experimental classes:
+Always run the `setenv.sh` script first to set the pythonpath and virtual environment. 
+Then you can either manually run one of the test/experimental classes:
 
     . setenv.sh
+    
     python mcm/sdos/tester/PerfTest.py
     python mcm/sdos/tester/GeomTest.py
+    ...
 
 
-or start it as a service that offers the Swift API proxy to which your Swift clients can connect:
+or start a service that offers the Swift API proxy to which your Swift clients can connect:
     
     . setenv.sh
     python runService_Development.py
