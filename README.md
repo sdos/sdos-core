@@ -1,22 +1,29 @@
-# osecm-sdos
-The Secure Delete Object Store
+# MCM-SDOS
+The Secure Delete Object Store - part of the Micro Content Management system (MCM)
+
+MCM consists of multiple components that form a small experimental content management system.
+
+The Secure Delete Object Store (SDOS) implements a key management mechanism that enables cryptographic deletion of objects. 
+SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. SDOS can be used with any unmodified Swift client and server.
 
 ## How to use
 you can either manually run one of the test/experimental classes:
 
-    mcm/sdos/tester/PerfTest.py
-    mcm/sdos/tester/GeomTest.py
+    . setenv.sh
+    python mcm/sdos/tester/PerfTest.py
+    python mcm/sdos/tester/GeomTest.py
 
 
-or run it as a service...
+or start it as a service that offers the Swift API proxy to which your Swift clients can connect:
     
-    coming soon...
+    . setenv.sh
+    python runService_Development.py
     
     
 ### configuration
 is currently done by setting parameters in
 
-     mcm/sdos/core/Configuration.py
+     mcm/sdos/configuration.py
 
 
 ## Dev setup
@@ -35,16 +42,7 @@ in the main directory
 to leave venv
 
     deactivate
-    
-    
-### running after first setup
-in the main directory
-
-
-    . setenv.sh
-    python mcm/sdos/tester/PerfTest.py
-    (or any other class...)
-    
+  
     
 ### use pip to install requirements
 just install the existing reqs
