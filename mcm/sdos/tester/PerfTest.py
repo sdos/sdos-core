@@ -128,7 +128,7 @@ if __name__ == '__main__':
 	# runPutTest('/home/tim/sdos-measure/testdata/100kB', 0, 1000, frontend)
 	# runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
 	# runGetTest('/dev/shm/res', 0, 5, frontend)
-	# runDeleteTest(0,1000, frontend)
+	runDeleteTest(110,150, frontend)
 	# runGetTest('/home/tim/sdos-measure/testdata/result_100kB', 1, 3, frontend)
 	# runGetTest('/dev/shm/result_1kB', 1000, frontend)
 

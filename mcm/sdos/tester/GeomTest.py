@@ -34,4 +34,7 @@ if __name__ == '__main__':
 	frontend = Frontend.SdosFrontend(containerName='sdosTest1')
 	cascade = frontend.cascade
 
-	log.warning(treeGeometry.getGeometry(cascade=cascade))
+	log.warning(treeGeometry.get_geometry_json(cascade=cascade))
+	log.warning(treeGeometry.get_slot_mapping(cascade=cascade))
+	log.warning(treeGeometry.get_slot_mapping_stats_json(cascade=cascade))
+	#treeGeometry.print_slot_mapping(cascade=cascade)

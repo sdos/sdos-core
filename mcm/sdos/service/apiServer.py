@@ -88,6 +88,12 @@ def handle_auth():
 	return Response(response="", status=swiftStatus, headers=swiftHeaders)
 
 
+
+
+##############################################################################
+# API functions
+##############################################################################
+
 """
 	Account functions
 """
