@@ -97,11 +97,12 @@ class SdosFrontend(object):
 	This frontend implements the SDOS functionality
 	"""
 
-	def __init__(self, containerName):
+	def __init__(self, containerName, swiftTenant = None, swiftToken = None):
 		"""
 		Constructor
 		"""
 		self.si = SwiftBackend.SwiftBackend()
+		self.si.set_existing_authentication(tenant=swiftTenant, token=swiftToken)
 		self.containerName = containerName
 
 		containerNameSdosMgmt = '{}.sdos'.format(containerName)

@@ -38,3 +38,14 @@ if __name__ == '__main__':
 	log.warning(treeGeometry.get_slot_mapping(cascade=cascade))
 	log.warning(treeGeometry.get_slot_mapping_stats_json(cascade=cascade))
 	#treeGeometry.print_slot_mapping(cascade=cascade)
+
+
+
+
+
+
+
+
+
+	user = 'test:tester'
+	key = 'testing'

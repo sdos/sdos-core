@@ -12,7 +12,7 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging, io
+import logging
 from functools import wraps
 from flask import request, Response
 
@@ -62,6 +62,9 @@ def replaceStorageUrl(swiftResponse):
 def strip_etag(h):
 	h.pop("Etag")
 	return h
+
+def get_token(request):
+	return request.headers["X-Auth-Token"]
 
 
 ##############################################################################
@@ -144,10 +147,10 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 200 and len(b)):
-		frontend = Frontend.SdosFrontend(containerName=thisContainer)
+		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 		decrypted_b = frontend.decrypt_bytes_object(b, thisObject)
 		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
-	raise HttpError("decrypting the object failed")
+	raise HttpError("decrypting failed; received no data from swift")
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "PUT", "DELETE"])
