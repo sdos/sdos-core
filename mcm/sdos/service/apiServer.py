@@ -12,12 +12,14 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
+import logging, io
 from functools import wraps
 from flask import request, Response
+
 from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
+from mcm.sdos.core import Frontend
 
 """WSGI application for the proxy server."""
 
@@ -30,17 +32,20 @@ log = logging.getLogger()
 def log_requests(f):
 	@wraps(f)
 	def logging_wrapper(*args, **kwargs):
-		log.debug("<<<{}>>> handles request: {} {}".format(f.__name__, request.method, request.url))
+		log.debug(
+			"<<<{}>>> handles request: {} {} -- HEADERS: {} -- ARGS: {} -- DATA: {}".format(f.__name__, request.method,
+			                                                                                request.url,
+			                                                                                request.headers,
+			                                                                                request.args, request.data))
 		return f(*args, **kwargs)
 
 	return logging_wrapper
 
 
-
 @app.after_request
 def add_mcm_id(response):
-    response.headers["MCM-Service-Type"] = "SDOS"
-    return response
+	response.headers["MCM-Service-Type"] = "SDOS"
+	return response
 
 
 ##############################################################################
@@ -54,6 +59,11 @@ def replaceStorageUrl(swiftResponse):
 	swiftResponse['X-Storage-Url'] = configuration.proxy_storage_url.format(swiftAuthName)
 
 
+def strip_etag(h):
+	h.pop("Etag")
+	return h
+
+
 ##############################################################################
 # error handler
 ##############################################################################
@@ -62,7 +72,7 @@ def handle_invalid_usage(e):
 	if (HttpError == type(e)):
 		return e.to_string(), e.status_code
 	log.exception("internal error")
-	return "Internal Server Error", 500
+	return "Exception in the SDOS service; check logs", 400
 
 
 """
@@ -88,8 +98,6 @@ def handle_auth():
 	return Response(response="", status=swiftStatus, headers=swiftHeaders)
 
 
-
-
 ##############################################################################
 # API functions
 ##############################################################################
@@ -103,9 +111,6 @@ def handle_auth():
 @log_requests
 def handle_account(thisAuth):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
-	log.debug(
-		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,
-		                                                                request.data))
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	return Response(response=b, status=s, headers=h)
@@ -121,9 +126,6 @@ def handle_account(thisAuth):
 def handle_container(thisAuth, thisContainer):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer
-	log.debug(
-		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,
-		                                                                request.data))
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	return Response(response=b, status=s, headers=h)
@@ -134,14 +136,25 @@ def handle_container(thisAuth, thisContainer):
 """
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "GET", "PUT", "DELETE"])
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET"])
+@log_requests
+def handle_object_get(thisAuth, thisContainer, thisObject):
+	myUrl = configuration.swift_storage_url.format(thisAuth)
+	myUrl += "/" + thisContainer + "/" + thisObject
+	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
+	                                       reqArgs=request.args, reqData=request.data)
+	if (s == 200 and len(b)):
+		frontend = Frontend.SdosFrontend(containerName=thisContainer)
+		decrypted_b = frontend.decrypt_bytes_object(b, thisObject)
+		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
+	raise HttpError("decrypting the object failed")
+
+
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "PUT", "DELETE"])
 @log_requests
 def handle_object(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
-	log.debug(
-		"client request {}, header: {}, args: {} -- content: {}".format(request.method, request.headers, request.args,
-		                                                                request.data))
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	return Response(response=b, status=s, headers=h)

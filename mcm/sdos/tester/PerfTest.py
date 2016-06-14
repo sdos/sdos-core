@@ -123,12 +123,12 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1')
-	frontend = Frontend.SdosFrontend(containerName='sdosTest1')
+	frontend = Frontend.SdosFrontend(containerName='sdosTest2')
 
-	# runPutTest('/home/tim/sdos-measure/testdata/100kB', 0, 1000, frontend)
-	# runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
+	#runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 10, frontend)
+	runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
 	# runGetTest('/dev/shm/res', 0, 5, frontend)
-	runDeleteTest(110,150, frontend)
+	#runDeleteTest(110,150, frontend)
 	# runGetTest('/home/tim/sdos-measure/testdata/result_100kB', 1, 3, frontend)
 	# runGetTest('/dev/shm/result_1kB', 1000, frontend)
 

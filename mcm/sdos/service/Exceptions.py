@@ -19,6 +19,7 @@ def raiseHttpError(msg, status_code):
 
 
 class HttpError(Exception):
+	# default to 400 since many clients will retry on "server fault" codes (500s and so on...)
 	status_code = 400
 
 	def __init__(self, message, status_code=None):

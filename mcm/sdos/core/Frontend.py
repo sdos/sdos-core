@@ -19,6 +19,8 @@
 	This module contains SDOS-frontends, i.e. the classes that offer access to SDOS
 	the frontends will then use methods from the SDOS core and finally use a backend to store/retrieve data
 """
+
+import io
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto.DataCrypt import DataCrypt
 from mcm.sdos.crypto import CryptoLib
@@ -122,11 +124,16 @@ class SdosFrontend(object):
 		c = DataCrypt(key).encryptBytesIO(plaintext=o)
 		self.si.putObject(self.containerName, name, c)
 
-	def getObject(self, name):
+	def decrypt_object(self, c, name):
 		key = self.cascade.getKeyForStoredObject(name)
-
-		c = self.si.getObject(container=self.containerName, name=name)
 		return DataCrypt(key).decryptBytesIO(ciphertext=c)
+
+	def decrypt_bytes_object(self, c, name):
+		return self.decrypt_object(io.BytesIO(c), name).read()
+
+	def getObject(self, name):
+		c = self.si.getObject(container=self.containerName, name=name)
+		return self.decrypt_object(c, name)
 
 	def deleteObject(self, name):
 		# self.cascade.deleteObjectKey(name)

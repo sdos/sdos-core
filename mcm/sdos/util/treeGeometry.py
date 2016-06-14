@@ -21,17 +21,6 @@ from mcm.sdos import configuration
 log = logging.getLogger()
 
 
-class TreeGeometry(object):
-	"""
-	classdocs
-	"""
-
-	def __init__(self):
-		"""
-		Constructor
-		"""
-
-
 def get_geometry_json(cascade):
 	g = {
 		"levels": configuration.TREE_HEIGHT + 1,
