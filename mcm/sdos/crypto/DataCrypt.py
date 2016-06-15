@@ -14,12 +14,13 @@
 
 import logging
 from mcm.sdos.crypto.CryptoLib import CryptoLib
-
+HEADER = 'SDOS_ENCO_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')
 
 class DataCrypt(object):
 	"""
 	classdocs
 	"""
+
 
 	def __init__(self, key):
 		"""
@@ -28,7 +29,7 @@ class DataCrypt(object):
 		self.log = logging.getLogger(__name__)
 		self.log.debug('initializing')
 		self.key = key
-		self.cl = CryptoLib(key, 'SDOS_ENCO_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict'))
+		self.cl = CryptoLib(key, HEADER)
 
 	###############################################################################
 	###############################################################################

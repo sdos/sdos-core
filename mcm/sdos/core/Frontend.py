@@ -117,11 +117,21 @@ class SdosFrontend(object):
 	def finish(self):
 		self.cascade.finish()
 
-	def putObject(self, o, name):
-		key = self.cascade.getKeyForNewObject(name)
 
-		c = DataCrypt(key).encryptBytesIO(plaintext=o)
+	def encrypt_object(self, o, name):
+		key = self.cascade.getKeyForNewObject(name)
+		return DataCrypt(key).encryptBytesIO(plaintext=o)
+
+	def encrypt_bytes_object(self, o, name):
+		return self.encrypt_object(o=io.BytesIO(o), name=name).read()
+
+
+	def putObject(self, o, name):
+		c = self.encrypt_object(o=o, name=name)
 		self.si.putObject(self.containerName, name, c)
+
+
+
 
 	def decrypt_object(self, c, name):
 		key = self.cascade.getKeyForStoredObject(name)
@@ -133,6 +143,9 @@ class SdosFrontend(object):
 	def getObject(self, name):
 		c = self.si.getObject(container=self.containerName, name=name)
 		return self.decrypt_object(c, name)
+
+
+
 
 	def deleteObject(self, name, deleteParentInSwift = True):
 		self.cascade.secureDeleteObjectKey(name)

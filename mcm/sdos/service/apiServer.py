@@ -29,6 +29,7 @@ from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
 from mcm.sdos.core import Frontend
+from mcm.sdos.crypto import DataCrypt
 
 
 log = logging.getLogger()
@@ -70,6 +71,11 @@ def replaceStorageUrl(swiftResponse):
 def strip_etag(h):
 	h.pop("Etag")
 	return h
+
+def add_sdos_flag(h):
+	i = dict(h)
+	i["X-Object-Meta-MCM-Content"] = DataCrypt.HEADER
+	return i
 
 def get_token(request):
 	return request.headers["X-Auth-Token"]
@@ -181,11 +187,24 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "PUT"])
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
 @log_requests
-def handle_object(thisAuth, thisContainer, thisObject):
+def handle_object_put(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
-	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
-	                                       reqArgs=request.args, reqData=request.data)
-	return Response(response=b, status=s, headers=h)
+
+	frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+	encrypted_b = frontend.encrypt_bytes_object(o=request.data, name=thisObject)
+	frontend.finish()
+
+	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=add_sdos_flag(request.headers),
+	                                       reqArgs=request.args, reqData=encrypted_b)
+	return Response(response=b, status=s, headers=strip_etag(h))
+
+
+
+
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST"])
+@log_requests
+def handle_object(thisAuth, thisContainer, thisObject):
+	raise HttpError("nothing")
