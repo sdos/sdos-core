@@ -36,6 +36,7 @@ log = logging.getLogger()
 
 PSEUDO_OBJECT_PREFIX = "__mcm__"
 
+
 ##############################################################################
 # decorators
 ##############################################################################
@@ -73,24 +74,29 @@ def strip_etag(h):
 	h.pop("Etag")
 	return h
 
+
 def add_sdos_flag(h):
 	i = dict(h)
 	i["X-Object-Meta-MCM-Content"] = DataCrypt.HEADER
 	return i
 
+
 def get_token(request):
 	return request.headers["X-Auth-Token"]
+
 
 def handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject):
 	log.debug("request for MCM pseudo object: {} in container: {}".format(thisObject, thisContainer))
 	frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 	cascade = frontend.cascade
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "tree_geometry":
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_tree_geometry":
 		return Response(response=treeGeometry.get_geometry_json(cascade=cascade), status=200, content_type="text/json")
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "slot_mapping":
-		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200, content_type="text/json")
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "slot_mapping_stats":
-		return Response(response=treeGeometry.get_slot_mapping_stats_json(cascade=cascade), status=200, content_type="text/json")
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
+		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200,
+		                content_type="text/json")
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping_stats":
+		return Response(response=treeGeometry.get_slot_mapping_stats_json(cascade=cascade), status=200,
+		                content_type="text/json")
 	else:
 		raise HttpError("unknown pseudo object: {}".format(thisObject))
 
@@ -177,11 +183,11 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 200 and len(b)):
-		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth,
+		                                 swiftToken=get_token(request))
 		decrypted_b = frontend.decrypt_bytes_object(b, thisObject)
 		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
 	return Response(response=b, status=s, headers=h)
-
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["DELETE"])
@@ -192,15 +198,12 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 204):
-		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth,
+		                                 swiftToken=get_token(request))
 		frontend.deleteObject(thisObject, deleteParentInSwift=False)
 		frontend.finish()
 		return Response(response=b, status=s, headers=h)
 	raise HttpError("deletion failed; swift didn't confirm deletion of the parent object")
-
-
-
-
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
@@ -216,8 +219,6 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=add_sdos_flag(request.headers),
 	                                       reqArgs=request.args, reqData=encrypted_b)
 	return Response(response=b, status=s, headers=strip_etag(h))
-
-
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST"])
