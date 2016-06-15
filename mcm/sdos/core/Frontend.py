@@ -33,11 +33,11 @@ class DirectFrontend(object):
 	This frontend directly sotes files in the backend without modification/additional stuff
 	"""
 
-	def __init__(self, containerName):
+	def __init__(self, containerName, swiftTenant = None, swiftToken = None, swiftUser = None, swiftKey = None):
 		"""
 		Constructor
 		"""
-		self.si = SwiftBackend.SwiftBackend()
+		self.si = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken, user=swiftUser, key=swiftKey)
 		self.containerName = containerName
 
 	def finish(self):
@@ -64,11 +64,11 @@ class CryptoFrontend(object):
 	No key management/SDOS mgmt is performed
 	"""
 
-	def __init__(self, containerName):
+	def __init__(self, containerName, swiftTenant = None, swiftToken = None, swiftUser = None, swiftKey = None):
 		"""
 		Constructor
 		"""
-		self.si = SwiftBackend.SwiftBackend()
+		self.si = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken, user=swiftUser, key=swiftKey)
 		self.containerName = containerName
 
 	def finish(self):
@@ -97,12 +97,11 @@ class SdosFrontend(object):
 	This frontend implements the SDOS functionality
 	"""
 
-	def __init__(self, containerName, swiftTenant = None, swiftToken = None):
+	def __init__(self, containerName, swiftTenant = None, swiftToken = None, swiftUser = None, swiftKey = None):
 		"""
 		Constructor
 		"""
-		self.si = SwiftBackend.SwiftBackend()
-		self.si.set_existing_authentication(tenant=swiftTenant, token=swiftToken)
+		self.si = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken, user=swiftUser, key=swiftKey)
 		self.containerName = containerName
 
 		containerNameSdosMgmt = '{}.sdos'.format(containerName)

@@ -21,7 +21,14 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
 from mcm.sdos.core import Frontend
 
-"""WSGI application for the proxy server."""
+"""
+	WSGI application for the proxy server.
+	This service receives requests over a REST API that effectively behaves like a swift server
+	 requests are directly forwarded (using a http lib) to swift in order to retrieve objects, containers etc.
+	 a swift client lib is then used to issue further (new) requests to swift in order to retrieve the key cascade objects
+	 the first response form swift (containing the data object) is then modified (decryption) and passed to the client
+
+"""
 
 log = logging.getLogger()
 

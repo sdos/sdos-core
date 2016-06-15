@@ -23,13 +23,19 @@ class SwiftBackend(object):
 	classdocs
 	"""
 
-	def __init__(self):
+	def __init__(self, tenant=None, token=None, user=None, key=None):
 		"""
 		Constructor
 		"""
 		self.log = logging.getLogger(__name__)
 		self.log.debug('initializing...')
 		self.swiftC = None
+
+		if tenant and token:
+			self.set_existing_authentication(tenant=tenant,token=token)
+		elif user and key:
+			self.authenticate(user=user, key=key)
+		self._assertConnection()
 
 	###############################################################################
 	###############################################################################
@@ -46,7 +52,7 @@ class SwiftBackend(object):
 		                                            insecure='true')
 
 	def _assertConnection(self):
-		if not self.swiftC: raise Exception(
+		if not self.swiftC: raise AttributeError(
 			'no swift connection object present. Maybe the swift backend was not properly initialized.')
 
 	###############################################################################
