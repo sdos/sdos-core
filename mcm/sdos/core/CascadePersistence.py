@@ -112,6 +112,10 @@ class SwiftPartitionStore(object):
 		self.objectName = 'partition_{}.sdos'
 		self.containerNameSdosMgmt = containerNameSdosMgmt
 		self.swiftBackend = swiftBackend
+		self.__assure_container_presence()
+
+	def __assure_container_presence(self):
+		self.swiftBackend.create_container_if_not_exists(self.containerNameSdosMgmt)
 
 	def writePartition(self, partitionId, by):
 		objName = self.objectName.format(partitionId)

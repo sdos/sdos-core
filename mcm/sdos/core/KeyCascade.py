@@ -94,6 +94,7 @@ class Cascade(object):
 	###############################################################################
 	def getKeyForNewObject(self, name):
 		slot = self.keySlotMapper.getOrCreateMapping(name)
+		print("§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§ " + name)
 		return self._getKeyFromCascade(slot, createIfNotExists=True)
 
 	def getKeyForStoredObject(self, name):

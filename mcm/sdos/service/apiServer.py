@@ -30,10 +30,11 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
 from mcm.sdos.core import Frontend
 from mcm.sdos.crypto import DataCrypt
-
+from mcm.sdos.util import treeGeometry
 
 log = logging.getLogger()
 
+PSEUDO_OBJECT_PREFIX = "__mcm__"
 
 ##############################################################################
 # decorators
@@ -79,6 +80,19 @@ def add_sdos_flag(h):
 
 def get_token(request):
 	return request.headers["X-Auth-Token"]
+
+def handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject):
+	log.debug("request for MCM pseudo object: {} in container: {}".format(thisObject, thisContainer))
+	frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+	cascade = frontend.cascade
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "tree_geometry":
+		return Response(response=treeGeometry.get_geometry_json(cascade=cascade), status=200, content_type="text/json")
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "slot_mapping":
+		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200, content_type="text/json")
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "slot_mapping_stats":
+		return Response(response=treeGeometry.get_slot_mapping_stats_json(cascade=cascade), status=200, content_type="text/json")
+	else:
+		raise HttpError("unknown pseudo object: {}".format(thisObject))
 
 
 ##############################################################################
@@ -156,6 +170,8 @@ def handle_container(thisAuth, thisContainer):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET", "HEAD"])
 @log_requests
 def handle_object_get(thisAuth, thisContainer, thisObject):
+	if thisObject.startswith(PSEUDO_OBJECT_PREFIX):
+		return handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject)
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,

@@ -81,3 +81,12 @@ class SwiftBackend(object):
 		self._assertConnection()
 		rsp = dict()
 		self.swiftC.delete_object(container=container, obj=name, query_string=None, response_dict=rsp)
+
+	def create_container_if_not_exists(self, container):
+		self.log.debug('create_container_if_not_exists: {}'.format(container))
+		self._assertConnection()
+		try:
+			self.swiftC.post_container(container=container, headers={})
+		except swiftclient.exceptions.ClientException:
+			self.swiftC.put_container(container=container, headers={})
+
