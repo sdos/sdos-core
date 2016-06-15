@@ -10,6 +10,15 @@
 
 	This software may be modified and distributed under the terms
 	of the MIT license.  See the LICENSE file for details.
+
+
+
+		WSGI application for the proxy server.
+	This service receives requests over a REST API that effectively behaves like a swift server
+	 requests are directly forwarded (using a http lib) to swift in order to retrieve objects, containers etc.
+	 a swift client lib is then used to issue further (new) requests to swift in order to retrieve the key cascade objects
+	 the first response form swift (containing the data object) is then modified (decryption) and passed to the client
+
 """
 
 import logging
@@ -21,14 +30,6 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
 from mcm.sdos.core import Frontend
 
-"""
-	WSGI application for the proxy server.
-	This service receives requests over a REST API that effectively behaves like a swift server
-	 requests are directly forwarded (using a http lib) to swift in order to retrieve objects, containers etc.
-	 a swift client lib is then used to issue further (new) requests to swift in order to retrieve the key cascade objects
-	 the first response form swift (containing the data object) is then modified (decryption) and passed to the client
-
-"""
 
 log = logging.getLogger()
 
@@ -79,9 +80,9 @@ def get_token(request):
 ##############################################################################
 @app.errorhandler(Exception)
 def handle_invalid_usage(e):
+	log.exception("internal error")
 	if (HttpError == type(e)):
 		return e.to_string(), e.status_code
-	log.exception("internal error")
 	return "Exception in the SDOS service; check logs", 400
 
 
@@ -131,7 +132,7 @@ def handle_account(thisAuth):
 """
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE"])
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE", "HEAD"])
 @log_requests
 def handle_container(thisAuth, thisContainer):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
@@ -146,7 +147,7 @@ def handle_container(thisAuth, thisContainer):
 """
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET"])
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET", "HEAD"])
 @log_requests
 def handle_object_get(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
@@ -157,10 +158,30 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 		decrypted_b = frontend.decrypt_bytes_object(b, thisObject)
 		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
-	raise HttpError("decrypting failed; received no data from swift")
+	return Response(response=b, status=s, headers=h)
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "PUT", "DELETE"])
+
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["DELETE"])
+@log_requests
+def handle_object_delete(thisAuth, thisContainer, thisObject):
+	myUrl = configuration.swift_storage_url.format(thisAuth)
+	myUrl += "/" + thisContainer + "/" + thisObject
+	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
+	                                       reqArgs=request.args, reqData=request.data)
+	if (s == 204):
+		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+		frontend.deleteObject(thisObject, deleteParentInSwift=False)
+		frontend.finish()
+		return Response(response=b, status=s, headers=h)
+	raise HttpError("deletion failed; swift didn't confirm deletion of the parent object")
+
+
+
+
+
+
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST", "PUT"])
 @log_requests
 def handle_object(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)

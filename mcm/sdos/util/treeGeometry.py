@@ -54,10 +54,10 @@ def insert_empty_slots(mapping):
 	for slot in sorted(mapping.items()):
 		slot_local = slot[0] - configuration.FIRST_OBJECT_KEY_SLOT
 		empties = slot_local - next_expected_index
+		#print(slot, slot_local, next_expected_index, empties)
 		if (empties):
 			mapping_new[next_expected_index] = "########## {} empties (including this) follow ##########".format(empties)
-		else:
-			mapping_new[slot_local] = slot[1]
+		mapping_new[slot_local] = slot[1]
 		next_expected_index = slot_local + 1
 	mapping_new[next_expected_index] = "########## {} empties (including this) until end of space ##########".format(
 		configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT - next_expected_index)

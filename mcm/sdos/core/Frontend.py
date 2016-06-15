@@ -116,7 +116,6 @@ class SdosFrontend(object):
 
 	def finish(self):
 		self.cascade.finish()
-		pass
 
 	def putObject(self, o, name):
 		key = self.cascade.getKeyForNewObject(name)
@@ -135,10 +134,10 @@ class SdosFrontend(object):
 		c = self.si.getObject(container=self.containerName, name=name)
 		return self.decrypt_object(c, name)
 
-	def deleteObject(self, name):
-		# self.cascade.deleteObjectKey(name)
+	def deleteObject(self, name, deleteParentInSwift = True):
 		self.cascade.secureDeleteObjectKey(name)
-		self.si.deleteObject(container=self.containerName, name=name)
+		if deleteParentInSwift:
+			self.si.deleteObject(container=self.containerName, name=name)
 
 ###############################################################################
 ###############################################################################
