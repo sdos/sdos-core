@@ -34,7 +34,7 @@ from mcm.sdos.util import treeGeometry
 
 log = logging.getLogger()
 
-PSEUDO_OBJECT_PREFIX = "__mcm__"
+PSEUDO_OBJECT_PREFIX = "__mcm__/"
 
 
 ##############################################################################
@@ -91,12 +91,15 @@ def handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject):
 	cascade = frontend.cascade
 	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_tree_geometry":
 		return Response(response=treeGeometry.get_geometry_json(cascade=cascade), status=200, content_type="text/json")
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
 		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200,
 		                content_type="text/json")
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping_stats":
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping_stats":
 		return Response(response=treeGeometry.get_slot_mapping_stats_json(cascade=cascade), status=200,
 		                content_type="text/json")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization":
+		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade), status=200,
+		                content_type="text/plain")
 	else:
 		raise HttpError("unknown pseudo object: {}".format(thisObject))
 

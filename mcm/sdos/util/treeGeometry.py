@@ -15,6 +15,7 @@
 import json
 import logging
 import collections
+import math
 
 from mcm.sdos import configuration
 
@@ -41,11 +42,13 @@ def get_slot_mapping_stats_json(cascade):
 	                   "utilization": round(100/configuration.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m), 2)})
 
 
-def get_slot_mapping(cascade):
+def get_reverse_mapping(cascade):
 	mapper = cascade.keySlotMapper
 	m = mapper.getMappingDict()
-	reverse = dict((v, k) for k, v in m.items())
-	return insert_empty_slots(reverse)
+	return dict((v, k) for k, v in m.items())
+
+def get_slot_mapping(cascade):
+	return insert_empty_slots(get_reverse_mapping(cascade))
 
 
 def insert_empty_slots(mapping):
@@ -72,3 +75,49 @@ def print_slot_mapping(cascade):
 	m = get_slot_mapping(cascade=cascade)
 	for item in m.items():
 		print(item)
+
+
+def get_slot_utilization(cascade):
+	"""
+	:param cascade:
+	:return:
+	"""
+	reverse = get_reverse_mapping(cascade)
+	s = ""
+	MAXVAL = 9
+	NUMFIELDS = 10000
+	groupSize = math.floor((configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT + 1) / NUMFIELDS)
+	remainder = (configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT + 1) - groupSize * NUMFIELDS
+	currentPos = 0
+	foundInGroup = 0
+	for slot in range(configuration.FIRST_OBJECT_KEY_SLOT, configuration.LAST_OBJCT_KEY_SLOT):
+		if currentPos == groupSize:
+			s += str(math.ceil(MAXVAL/groupSize * foundInGroup))
+			currentPos = 0
+			foundInGroup = 0
+		if slot in reverse:
+			foundInGroup += 1
+		currentPos += 1
+	if remainder:
+		s += str(math.ceil(MAXVAL/remainder * foundInGroup))
+	return s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
