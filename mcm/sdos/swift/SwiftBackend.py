@@ -61,11 +61,11 @@ class SwiftBackend(object):
 	def printStatus(self):
 		self.log.info('status: ')
 
-	def putObject(self, container, name, dataObject):
+	def putObject(self, container, name, dataObject, headers={}):
 		self.log.debug('putting file to swift: {}'.format(name))
 		self._assertConnection()
 		rsp = dict()
-		self.swiftC.put_object(container=container, obj=name, contents=dataObject, response_dict=rsp)
+		self.swiftC.put_object(container=container, obj=name, contents=dataObject, response_dict=rsp, headers=headers)
 
 	def getObject(self, container, name):
 		self.log.debug('getting file from swift: {}'.format(name))
@@ -90,3 +90,9 @@ class SwiftBackend(object):
 		except swiftclient.exceptions.ClientException:
 			self.swiftC.put_container(container=container, headers={})
 
+
+	def is_sdos_container(self, containerName):
+		self.log.debug('checking for SDOS flag presence on container: {}'.format(containerName))
+		self._assertConnection()
+		t = self.swiftC.head_container(containerName)
+		return t.get("x-container-meta-sdos", False) == "True"

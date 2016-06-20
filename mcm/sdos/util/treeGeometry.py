@@ -33,13 +33,16 @@ def get_geometry_json(cascade):
 	return json.dumps(g)
 
 
-def get_slot_mapping_stats_json(cascade):
+def get_cascade_stats_json(cascade):
 	mapper = cascade.keySlotMapper
 	m = mapper.getMappingDict()
 	return json.dumps({"numObjects": len(m),
 	                   "numSlots": configuration.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS,
 	                   "freeSlots": configuration.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS - len(m),
-	                   "utilization": round(100/configuration.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m), 2)})
+	                   "utilization": str(round(100/configuration.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m), 2)) + "%",
+	                   "levels": configuration.TREE_HEIGHT + 1,
+	                   "partitionSize": configuration.PARTITION_SIZE
+	                   })
 
 
 def get_reverse_mapping(cascade):
@@ -77,7 +80,7 @@ def print_slot_mapping(cascade):
 		print(item)
 
 
-def get_slot_utilization(cascade):
+def get_slot_utilization(cascade, NUMFIELDS=10000):
 	"""
 	:param cascade:
 	:return:
@@ -85,7 +88,6 @@ def get_slot_utilization(cascade):
 	reverse = get_reverse_mapping(cascade)
 	s = ""
 	MAXVAL = 9
-	NUMFIELDS = 10000
 	groupSize = math.floor((configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT + 1) / NUMFIELDS)
 	remainder = (configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT + 1) - groupSize * NUMFIELDS
 	currentPos = 0
@@ -100,7 +102,7 @@ def get_slot_utilization(cascade):
 		currentPos += 1
 	if remainder:
 		s += str(math.ceil(MAXVAL/remainder * foundInGroup))
-	return s
+	return json.dumps({"groupSize": groupSize, "blocks": NUMFIELDS, "alloc": s})
 
 
 

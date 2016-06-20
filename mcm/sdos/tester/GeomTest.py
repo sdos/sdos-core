@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
 	log.warning(treeGeometry.get_geometry_json(cascade=cascade))
 	log.warning(treeGeometry.get_slot_mapping_json(cascade=cascade))
-	log.warning(treeGeometry.get_slot_mapping_stats_json(cascade=cascade))
+	log.warning(treeGeometry.get_cascade_stats_json(cascade=cascade))
 	treeGeometry.print_slot_mapping(cascade=cascade)
 	print(treeGeometry.get_slot_utilization(cascade=cascade))
 

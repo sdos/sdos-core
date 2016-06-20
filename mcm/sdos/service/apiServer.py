@@ -29,6 +29,7 @@ from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app
 from mcm.sdos.core import Frontend
+from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.util import treeGeometry
 
@@ -94,15 +95,38 @@ def handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject):
 	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
 		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200,
 		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping_stats":
-		return Response(response=treeGeometry.get_slot_mapping_stats_json(cascade=cascade), status=200,
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_cascade_stats":
+		return Response(response=treeGeometry.get_cascade_stats_json(cascade=cascade), status=200,
 		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization":
-		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade), status=200,
-		                content_type="text/plain")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10":
+		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,
+		                content_type="text/json")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization100":
+		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=100), status=200,
+		                content_type="text/json")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization1000":
+		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=1000), status=200,
+		                content_type="text/json")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10000":
+		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10000), status=200,
+		                content_type="text/json")
 	else:
 		raise HttpError("unknown pseudo object: {}".format(thisObject))
 
+
+
+
+
+##############################################################################
+# Frontend Pool
+##############################################################################
+
+def get_sdos_frontend(containerName, swiftTenant, swiftToken):
+	sb = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken)
+	if sb.is_sdos_container(containerName):
+		return Frontend.SdosFrontend(containerName, swiftTenant, swiftToken)
+	else:
+		return False
 
 ##############################################################################
 # error handler
@@ -122,7 +146,7 @@ def handle_invalid_usage(e):
 	becomes
 	'X-Storage-Url': 'http://localhost:4000/v1/AUTH_test'
 	
-	this is the first request any client makes; we passed on a auth.token from swift
+	this is the first request any client makes; we passed on an auth-token from swift
 	which is used in further requests
 """
 
@@ -144,6 +168,7 @@ def handle_auth():
 
 """
 	Account functions
+	--> direct passthrough to swift
 """
 
 
@@ -158,6 +183,7 @@ def handle_account(thisAuth):
 
 """
 	Container functions
+	--> direct passthrough to swift
 """
 
 
@@ -173,6 +199,7 @@ def handle_container(thisAuth, thisContainer):
 
 """
 	Object functions
+	--> handled by SDOS if needed
 """
 
 
@@ -185,12 +212,13 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 	myUrl += "/" + thisContainer + "/" + thisObject
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	if (s == 200 and len(b)):
-		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth,
-		                                 swiftToken=get_token(request))
-		decrypted_b = frontend.decrypt_bytes_object(b, thisObject)
+
+	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+	if (s == 200 and len(b) and sdos_frontend):
+		decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
 		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
-	return Response(response=b, status=s, headers=h)
+	else:
+		return Response(response=b, status=s, headers=h)
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["DELETE"])
@@ -200,13 +228,13 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 	myUrl += "/" + thisContainer + "/" + thisObject
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	if (s == 204):
-		frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth,
-		                                 swiftToken=get_token(request))
-		frontend.deleteObject(thisObject, deleteParentInSwift=False)
-		frontend.finish()
+
+	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+	if (s == 204 and sdos_frontend):
+		sdos_frontend.deleteObject(thisObject, deleteParentInSwift=False)
+		sdos_frontend.finish()
+	else:
 		return Response(response=b, status=s, headers=h)
-	raise HttpError("deletion failed; swift didn't confirm deletion of the parent object")
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
@@ -215,12 +243,20 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
 
-	frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
-	encrypted_b = frontend.encrypt_bytes_object(o=request.data, name=thisObject)
-	frontend.finish()
+	print("iiiiiiiiiiiiiii", request.data, request.headers)
 
-	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=add_sdos_flag(request.headers),
-	                                       reqArgs=request.args, reqData=encrypted_b)
+	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+	if (sdos_frontend):
+		data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
+		headers = add_sdos_flag(request.headers)
+		sdos_frontend.finish()
+	else:
+		data = request.data
+		headers = request.headers
+
+	print("oooooooooooo", data, headers)
+	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=headers,
+	                                       reqArgs=request.args, reqData=data)
 	return Response(response=b, status=s, headers=strip_etag(h))
 
 

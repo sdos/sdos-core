@@ -22,7 +22,7 @@
 
 import io
 from mcm.sdos.swift import SwiftBackend
-from mcm.sdos.crypto.DataCrypt import DataCrypt
+from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.crypto import CryptoLib
 from mcm.sdos.core.KeyCascade import Cascade
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
@@ -30,7 +30,7 @@ from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
 
 class DirectFrontend(object):
 	"""
-	This frontend directly sotes files in the backend without modification/additional stuff
+	This frontend directly stores files in the backend without modification/additional stuff
 	"""
 
 	def __init__(self, containerName, swiftTenant = None, swiftToken = None, swiftUser = None, swiftKey = None):
@@ -76,13 +76,13 @@ class CryptoFrontend(object):
 
 	def putObject(self, o, name):
 		key = CryptoLib.digestKeyString('keeey')
-		c = DataCrypt(key).encryptBytesIO(plaintext=o)
+		c = DataCrypt.DataCrypt(key).encryptBytesIO(plaintext=o)
 		self.si.putObject(self.containerName, name, c)
 
 	def getObject(self, name):
 		key = CryptoLib.digestKeyString('keeey')
 		c = self.si.getObject(container=self.containerName, name=name)
-		return DataCrypt(key).decryptBytesIO(ciphertext=c)
+		return DataCrypt.DataCrypt(key).decryptBytesIO(ciphertext=c)
 
 	def deleteObject(self, name):
 		self.si.deleteObject(container=self.containerName, name=name)
@@ -120,7 +120,7 @@ class SdosFrontend(object):
 
 	def encrypt_object(self, o, name):
 		key = self.cascade.getKeyForNewObject(name)
-		return DataCrypt(key).encryptBytesIO(plaintext=o)
+		return DataCrypt.DataCrypt(key).encryptBytesIO(plaintext=o)
 
 	def encrypt_bytes_object(self, o, name):
 		return self.encrypt_object(o=io.BytesIO(o), name=name).read()
@@ -128,14 +128,14 @@ class SdosFrontend(object):
 
 	def putObject(self, o, name):
 		c = self.encrypt_object(o=o, name=name)
-		self.si.putObject(self.containerName, name, c)
+		self.si.putObject(self.containerName, name, c, headers={"X-Object-Meta-MCM-Content": DataCrypt.HEADER})
 
 
 
 
 	def decrypt_object(self, c, name):
 		key = self.cascade.getKeyForStoredObject(name)
-		return DataCrypt(key).decryptBytesIO(ciphertext=c)
+		return DataCrypt.DataCrypt(key).decryptBytesIO(ciphertext=c)
 
 	def decrypt_bytes_object(self, c, name):
 		return self.decrypt_object(io.BytesIO(c), name).read()
