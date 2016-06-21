@@ -147,9 +147,9 @@ class SdosFrontend(object):
 
 
 
-	def deleteObject(self, name, deleteParentInSwift = True):
+	def deleteObject(self, name, deleteDataObjectInSwift = True):
 		self.cascade.secureDeleteObjectKey(name)
-		if deleteParentInSwift:
+		if deleteDataObjectInSwift:
 			self.si.deleteObject(container=self.containerName, name=name)
 
 ###############################################################################

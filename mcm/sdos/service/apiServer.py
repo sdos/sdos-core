@@ -206,10 +206,9 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 
 	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 	if (s == 204 and sdos_frontend):
-		sdos_frontend.deleteObject(thisObject, deleteParentInSwift=False)
+		sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
 		sdos_frontend.finish()
-	else:
-		return Response(response=b, status=s, headers=h)
+	return Response(response=b, status=s, headers=h)
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])

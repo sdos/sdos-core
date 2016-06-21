@@ -176,6 +176,8 @@ class Cascade(object):
 
 	def get_used_partitions(self):
 		def rekParts(listNow):
+			if not listNow:
+				return []
 			n = set()
 			for i in listNow:
 				s = self._getPartitionIdForSlot(i)
