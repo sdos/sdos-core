@@ -27,15 +27,13 @@ from flask import request, Response
 
 from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
-from mcm.sdos.service import httpBackend, app
+from mcm.sdos.service import httpBackend, app, pseudoObjects
 from mcm.sdos.core import Frontend
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto import DataCrypt
-from mcm.sdos.util import treeGeometry
 
 log = logging.getLogger()
 
-PSEUDO_OBJECT_PREFIX = "__mcm__/"
 
 
 ##############################################################################
@@ -86,32 +84,7 @@ def get_token(request):
 	return request.headers["X-Auth-Token"]
 
 
-def handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject):
-	log.debug("request for MCM pseudo object: {} in container: {}".format(thisObject, thisContainer))
-	frontend = Frontend.SdosFrontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
-	cascade = frontend.cascade
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_tree_geometry":
-		return Response(response=treeGeometry.get_geometry_json(cascade=cascade), status=200, content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
-		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200,
-		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_cascade_stats":
-		return Response(response=treeGeometry.get_cascade_stats_json(cascade=cascade), status=200,
-		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10":
-		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,
-		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization100":
-		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=100), status=200,
-		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization1000":
-		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=1000), status=200,
-		                content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10000":
-		return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10000), status=200,
-		                content_type="text/json")
-	else:
-		raise HttpError("unknown pseudo object: {}".format(thisObject))
+
 
 
 
@@ -206,14 +179,14 @@ def handle_container(thisAuth, thisContainer):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET", "HEAD"])
 @log_requests
 def handle_object_get(thisAuth, thisContainer, thisObject):
-	if thisObject.startswith(PSEUDO_OBJECT_PREFIX):
-		return handle_mcm_pseudo_objects(thisAuth, thisContainer, thisObject)
+	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+
+	if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
+		return pseudoObjects.dispatch(sdos_frontend, thisObject)
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-
-	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 	if (s == 200 and len(b) and sdos_frontend):
 		decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
 		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
