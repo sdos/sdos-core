@@ -17,14 +17,11 @@
 
 """
 
-
 import logging
-from flask import request, Response
+from flask import Response
 
 from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.util import treeGeometry
-
-
 
 log = logging.getLogger()
 

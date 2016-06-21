@@ -42,11 +42,13 @@ log = logging.getLogger()
 def log_requests(f):
 	@wraps(f)
 	def logging_wrapper(*args, **kwargs):
-		log.debug(
-			"<<<{}>>> handles request: {} {} -- HEADERS: {} -- ARGS: {} -- DATA: {}".format(f.__name__, request.method,
+		log.info(
+			"<<<{}>>> handles request: {} {} -- HEADERS: {} -- ARGS: {}".format(f.__name__, request.method,
 			                                                                                request.url,
 			                                                                                request.headers,
-			                                                                                request.args, request.data))
+			                                                                                request.args))
+		log.debug(
+			"Request DATA: {}".format(request.data))
 		return f(*args, **kwargs)
 
 	return logging_wrapper
@@ -215,9 +217,6 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 def handle_object_put(thisAuth, thisContainer, thisObject):
 	myUrl = configuration.swift_storage_url.format(thisAuth)
 	myUrl += "/" + thisContainer + "/" + thisObject
-
-	print("iiiiiiiiiiiiiii", request.data, request.headers)
-
 	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 	if (sdos_frontend):
 		data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
@@ -227,7 +226,6 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
 		data = request.data
 		headers = request.headers
 
-	print("oooooooooooo", data, headers)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=headers,
 	                                       reqArgs=request.args, reqData=data)
 	return Response(response=b, status=s, headers=strip_etag(h))
