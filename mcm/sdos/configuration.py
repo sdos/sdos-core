@@ -26,10 +26,10 @@ import logging, math, os
 	Log level setting
 """
 #log_level = logging.CRITICAL
-log_level = logging.ERROR
+#log_level = logging.ERROR
 #log_level = logging.WARNING
 #log_level = logging.INFO
-#log_level = logging.DEBUG
+log_level = logging.DEBUG
 log_format = '%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s'
 
 ###############################################################################
@@ -46,8 +46,12 @@ netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
 """
 	Key Cascade geometry / parameters
 """
-PARTITION_BITS =								8 #8 # 256 slots for 8 bit, 4 slots for 2 bit
-TREE_HEIGHT =									2 # height doesn't include the root
+#PARTITION_BITS =								8 #8 # 256 slots for 8 bit, 4 slots for 2 bit
+#TREE_HEIGHT =									2 # height doesn't include the root
+#CASCADE_FILE_PATH =								'/tmp/sdos'
+#BYTES_FOR_NAME_LENGTH =							2 # allows names to be 65536 characters long
+PARTITION_BITS =								2 #8 # 256 slots for 8 bit, 4 slots for 2 bit
+TREE_HEIGHT =									4 # height doesn't include the root
 CASCADE_FILE_PATH =								'/tmp/sdos'
 BYTES_FOR_NAME_LENGTH =							2 # allows names to be 65536 characters long
 

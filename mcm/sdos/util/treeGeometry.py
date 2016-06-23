@@ -31,7 +31,6 @@ def get_used_partitions_json(cascade):
 def get_partition_mapping_json(cascade):
 	return json.dumps(cascade.get_reverse_object_key_partition_mapping())
 
-
 def get_cascade_stats_json(cascade):
 	mapper = cascade.keySlotMapper
 	m = mapper.getMappingDict()
