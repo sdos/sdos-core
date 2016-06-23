@@ -5,15 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ba8a01e4-f4f5-4370-9d86-502fb0e49503" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/css/cascade.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/bower.json" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/bower.json" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/index.html" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosCascadeSheet.html" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosCascadeSheet.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsController.js" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsController.js" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/mcm/sdos/configuration.example.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/mcm/sdos/configuration.py" afterPath="$PROJECT_DIR$/mcm/sdos/configuration.example.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js" afterPath="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcm/sdos/configuration.py" afterPath="$PROJECT_DIR$/mcm/sdos/configuration.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcm/sdos/util/treeGeometry.py" afterPath="$PROJECT_DIR$/mcm/sdos/util/treeGeometry.py" />
     </list>
     <ignored path="osecm-sdos.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -45,31 +40,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="analytics.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/analytics/analytics.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="sdosDetailsRenderer.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="14" column="20" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+            <state relative-caret-position="150">
+              <caret line="10" column="13" selection-start-line="10" selection-start-column="13" selection-end-line="10" selection-end-column="13" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="configuration.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/mcm/sdos/configuration.py">
+      <file leaf-file-name="configuration.example.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/mcm/sdos/configuration.example.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="465">
-              <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
+            <state relative-caret-position="0">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -201,8 +186,8 @@
         <option value="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsController.js" />
         <option value="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/analytics/analytics.html" />
         <option value="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosCascadeSheet.html" />
-        <option value="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js" />
         <option value="$PROJECT_DIR$/mcm/sdos/configuration.py" />
+        <option value="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js" />
       </list>
     </option>
   </component>
@@ -831,10 +816,10 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/mcm/sdos" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container" />
       <recent name="$PROJECT_DIR$/mcm/sdos/service" />
-      <recent name="$PROJECT_DIR$/mcm/sdos" />
       <recent name="$PROJECT_DIR$/../mcm-bluebox" />
     </key>
   </component>
@@ -1360,14 +1345,21 @@
       <option name="project" value="LOCAL" />
       <updated>1466683340353</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="first d3 integration!">
+      <created>1466688271446</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1466688271446</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="1600" y="174" width="1680" height="1026" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21607143" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21607143" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -1402,7 +1394,6 @@
   <component name="VcsManagerConfiguration">
     <option name="OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="refactoring" />
     <MESSAGE value="optimize imports" />
     <MESSAGE value="move config, initial service" />
     <MESSAGE value="fix app startup" />
@@ -1427,7 +1418,8 @@
     <MESSAGE value="bugfix" />
     <MESSAGE value="separate functions for UI" />
     <MESSAGE value="add win setenv" />
-    <option name="LAST_COMMIT_MESSAGE" value="add win setenv" />
+    <MESSAGE value="first d3 integration!" />
+    <option name="LAST_COMMIT_MESSAGE" value="first d3 integration!" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1462,13 +1454,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/mcm/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mcm/sdos/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1836,14 +1821,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsController.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="720">
-          <caret line="48" column="75" selection-start-line="48" selection-start-column="75" selection-end-line="48" selection-end-column="75" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosCascadeSheet.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="30">
@@ -1852,18 +1829,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js">
+    <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsController.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="14" column="20" selection-start-line="14" selection-start-column="20" selection-end-line="14" selection-end-column="20" />
+        <state relative-caret-position="720">
+          <caret line="48" column="75" selection-start-line="48" selection-start-column="75" selection-end-line="48" selection-end-column="75" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/mcm/sdos/configuration.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="465">
-          <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
+        <state relative-caret-position="765">
+          <caret line="51" column="49" selection-start-line="51" selection-start-column="49" selection-end-line="51" selection-end-column="49" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../mcm-bluebox/mcm/Bluebox/angular/modules/container/sdosDetailsRenderer.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="13" selection-start-line="10" selection-start-column="13" selection-end-line="10" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mcm/sdos/configuration.example.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>

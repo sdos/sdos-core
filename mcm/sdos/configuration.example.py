@@ -48,9 +48,7 @@ netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
 """
 #PARTITION_BITS =								8 #8 # 256 slots for 8 bit, 4 slots for 2 bit
 #TREE_HEIGHT =									2 # height doesn't include the root
-#CASCADE_FILE_PATH =								'/tmp/sdos'
-#BYTES_FOR_NAME_LENGTH =							2 # allows names to be 65536 characters long
-PARTITION_BITS =								2 #8 # 256 slots for 8 bit, 4 slots for 2 bit
+PARTITION_BITS =								4 #8 # 256 slots for 8 bit, 4 slots for 2 bit
 TREE_HEIGHT =									4 # height doesn't include the root
 CASCADE_FILE_PATH =								'/tmp/sdos'
 BYTES_FOR_NAME_LENGTH =							2 # allows names to be 65536 characters long
