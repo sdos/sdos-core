@@ -24,6 +24,7 @@
 import logging
 from functools import wraps
 from flask import request, Response
+from swiftclient.exceptions import ClientException
 
 from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
@@ -31,6 +32,7 @@ from mcm.sdos.service import httpBackend, app, pseudoObjects
 from mcm.sdos.core import Frontend
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto import DataCrypt
+
 
 log = logging.getLogger()
 
@@ -108,10 +110,15 @@ def get_sdos_frontend(containerName, swiftTenant, swiftToken):
 ##############################################################################
 @app.errorhandler(Exception)
 def handle_invalid_usage(e):
-	log.exception("internal error")
+	log.error(e.__str__())
+	log.error(type(e))
+	if (ClientException == type(e)):
+		if (401 == e.http_status):
+			return "not authenticated", 401
+		return e.__str__(), e.http_status
 	if (HttpError == type(e)):
 		return e.to_string(), e.status_code
-	return "Exception in the SDOS service; check logs", 400
+	return "Internal Server Error", 500
 
 
 """

@@ -104,7 +104,7 @@ class SdosFrontend(object):
 		self.si = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken, user=swiftUser, key=swiftKey)
 		self.containerName = containerName
 
-		containerNameSdosMgmt = '{}.sdos'.format(containerName)
+		containerNameSdosMgmt = '_mcm-internal_SDOS-partitions_{}'.format(containerName)
 
 		# mappingStore = MappingPersistence.LocalFileMappingStore()
 		mappingStore = MappingPersistence.SwiftMappingStore(containerNameSdosMgmt=containerNameSdosMgmt, swiftBackend=self.si)

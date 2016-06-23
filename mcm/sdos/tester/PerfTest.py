@@ -54,6 +54,7 @@ def runPutTest(testDataPath, testDataRangeStart, testDataRangeEnd, f):
 	timeStart = time.perf_counter()
 	times = [time.perf_counter()]
 	for i in range(testDataRangeStart, testDataRangeEnd):
+		print(i)
 		thisPath = '%s/%i' % (testDataPath, i)
 		o = loadTestData(thisPath)
 
@@ -125,7 +126,7 @@ if __name__ == '__main__':
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
 	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftUser = 'test:tester', swiftKey = 'testing')
 
-	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 10, frontend)
+	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 1000, frontend)
 	#runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
 	# runGetTest('/dev/shm/res', 0, 5, frontend)
 	#runDeleteTest(110,150, frontend)
