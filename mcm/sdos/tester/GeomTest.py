@@ -31,7 +31,7 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1')
-	frontend = Frontend.SdosFrontend(containerName='t2', swiftUser = 'test:tester', swiftKey = 'testing')
+	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftUser = 'test:tester', swiftKey = 'testing')
 	cascade = frontend.cascade
 
 	print(treeGeometry.get_used_partitions_json(cascade=cascade))
