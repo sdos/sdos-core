@@ -65,12 +65,12 @@ def runPutTest(testDataPath, testDataRangeStart, testDataRangeEnd, f):
 	timeEnd = time.perf_counter()
 	log.warning('RESULT (PUT): total test runtime: %s seconds, mean per object: %s' % (
 		timeEnd - timeStart, ((timeEnd - timeStart) / testDataRangeEnd)))
-	log.warning('RESULT (PUT): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
-	log.warning('RESULT (PUT): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
-	log.warning('RESULT (PUT): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
+	log.critical('RESULT (PUT): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
+	log.critical('RESULT (PUT): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
+	log.critical('RESULT (PUT): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
 
 
-# log.warning('RESULT (PUT): individual times: %s ' % (calculateTimeDeltas(times)))
+# log.critical('RESULT (PUT): individual times: %s ' % (calculateTimeDeltas(times)))
 
 def runGetTest(testDataPath, testDataRangeStart, testDataRangeEnd, f):
 	log.debug('running get tests...')
@@ -85,14 +85,14 @@ def runGetTest(testDataPath, testDataRangeStart, testDataRangeEnd, f):
 		times.append(time.perf_counter())
 
 	timeEnd = time.perf_counter()
-	log.warning('RESULT (GET): total test runtime: %s seconds, mean per object: %s' % (
+	log.critical('RESULT (GET): total test runtime: %s seconds, mean per object: %s' % (
 		timeEnd - timeStart, ((timeEnd - timeStart) / testDataRangeEnd)))
-	log.warning('RESULT (GET): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
-	log.warning('RESULT (GET): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
-	log.warning('RESULT (GET): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
+	log.critical('RESULT (GET): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
+	log.critical('RESULT (GET): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
+	log.critical('RESULT (GET): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
 
 
-# log.warning('RESULT (GET): individual times: %s ' % (calculateTimeDeltas(times)))
+# log.critical('RESULT (GET): individual times: %s ' % (calculateTimeDeltas(times)))
 
 def runDeleteTest(testDataRangeStart, testDataRangeEnd, f):
 	log.debug('running delete tests...')
@@ -104,14 +104,14 @@ def runDeleteTest(testDataRangeStart, testDataRangeEnd, f):
 		times.append(time.perf_counter())
 
 	timeEnd = time.perf_counter()
-	log.warning('RESULT (DELETE): total test runtime: %s seconds, mean per object: %s' % (
+	log.critical('RESULT (DELETE): total test runtime: %s seconds, mean per object: %s' % (
 		timeEnd - timeStart, ((timeEnd - timeStart) / testDataRangeEnd)))
-	log.warning('RESULT (DELETE): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
-	log.warning('RESULT (DELETE): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
-	log.warning('RESULT (DELETE): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
+	log.critical('RESULT (DELETE): median result: %s ' % statistics.median(calculateTimeDeltas(times)))
+	log.critical('RESULT (DELETE): standard deviation result: %s ' % statistics.stdev(calculateTimeDeltas(times)))
+	log.critical('RESULT (DELETE): mean result: %s ' % statistics.mean(calculateTimeDeltas(times)))
 
 
-# log.warning('RESULT (DELETE): individual times: %s ' % (calculateTimeDeltas(times)))
+# log.critical('RESULT (DELETE): individual times: %s ' % (calculateTimeDeltas(times)))
 
 
 
@@ -124,9 +124,9 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
-	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftUser = 'test:tester', swiftKey = 'testing')
+	frontend = Frontend.SdosFrontend(containerName='sdt2', swiftUser = 'test:tester', swiftKey = 'testing')
 
-	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 1000, frontend)
+	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 10000, frontend)
 	#runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
 	# runGetTest('/dev/shm/res', 0, 5, frontend)
 	#runDeleteTest(110,150, frontend)

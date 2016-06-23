@@ -22,15 +22,14 @@ from mcm.sdos import configuration
 log = logging.getLogger()
 
 
-def get_geometry_json(cascade):
-	g = {
-		"levels": configuration.TREE_HEIGHT + 1,
-		"partitionSize": configuration.PARTITION_SIZE,
-		# "usedSlots": cascade.keySlotMapper.usedList,
-		"usedPartitions": cascade.get_used_partitions(),
-		"objectMapping": cascade.get_reverse_object_key_partition_mapping()
-	}
-	return json.dumps(g)
+###############################################################################
+###############################################################################
+
+def get_used_partitions_json(cascade):
+	return json.dumps(cascade.get_used_partitions())
+
+def get_partition_mapping_json(cascade):
+	return json.dumps(cascade.get_reverse_object_key_partition_mapping())
 
 
 def get_cascade_stats_json(cascade):
@@ -45,16 +44,26 @@ def get_cascade_stats_json(cascade):
 	                   })
 
 
-def get_reverse_mapping(cascade):
+
+###############################################################################
+###############################################################################
+
+def reverse_slot_mapping(cascade):
+	"""
+	reverse the obj->slot mapping to slot->obj
+	:param cascade:
+	:return:
+	"""
 	mapper = cascade.keySlotMapper
 	m = mapper.getMappingDict()
 	return dict((v, k) for k, v in m.items())
 
-def get_slot_mapping(cascade):
-	return insert_empty_slots(get_reverse_mapping(cascade))
-
-
 def insert_empty_slots(mapping):
+	"""
+	use the mapping slot->obj and fill the gaps (missing slot IDs) with some info text
+	:param mapping:
+	:return:
+	"""
 	mapping_new = collections.OrderedDict()
 	next_expected_index = 0
 	for slot in sorted(mapping.items()):
@@ -69,23 +78,39 @@ def insert_empty_slots(mapping):
 		configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT - next_expected_index)
 	return mapping_new
 
+def get_reverse_slot_mapping(cascade):
+	"""
+	call the above two functions to produce the slot->obj mapping
+	:param cascade:
+	:return:
+	"""
+	return insert_empty_slots(reverse_slot_mapping(cascade))
 
-def get_slot_mapping_json(cascade):
-	return json.dumps(get_slot_mapping(cascade=cascade))
+def get_reverse_slot_mapping_json(cascade):
+	return json.dumps(get_reverse_slot_mapping(cascade=cascade))
 
-
-def print_slot_mapping(cascade):
-	m = get_slot_mapping(cascade=cascade)
+def print_reverse_slot_mapping(cascade):
+	m = get_reverse_slot_mapping(cascade=cascade)
 	for item in m.items():
 		print(item)
+
+###############################################################################
+###############################################################################
+
+
 
 
 def get_slot_utilization(cascade, NUMFIELDS=10000):
 	"""
+	<p>Each number represents a block of "groupSize" key slots.
+                Numbers 0 through 9 indicate how many slots are used in that block; with 0 all slots are empty and with
+                9 all are utilized.
+                Note that these <q>blocks</q> are only used here for visualizing allocation. They don't align with key
+                partitions or anything.</p>
 	:param cascade:
 	:return:
 	"""
-	reverse = get_reverse_mapping(cascade)
+	reverse = reverse_slot_mapping(cascade)
 	s = ""
 	MAXVAL = 9
 	groupSize = math.floor((configuration.LAST_OBJCT_KEY_SLOT - configuration.FIRST_OBJECT_KEY_SLOT + 1) / NUMFIELDS)

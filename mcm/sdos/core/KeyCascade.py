@@ -189,6 +189,12 @@ class Cascade(object):
 		return list(p)
 
 	def get_reverse_object_key_partition_mapping(self):
+		"""
+		produces a dict that maps obj key partitions to their object key content.
+		example for partition 257:
+		{"257": [{"objName": "WindowsInstaller.c", "slot": 157}, {"objName": "Inheritance.java", "slot": 23}
+		:return:
+		"""
 		result = dict()
 		for objName, objKeySlot in self.keySlotMapper.getMappingDict().items():
 			objKeyPartition = self._getPartitionIdForSlot(objKeySlot)

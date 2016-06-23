@@ -31,11 +31,10 @@ PSEUDO_OBJECT_PREFIX = "__mcm__/"
 def dispatch(sdos_frontend, thisObject):
 	log.debug("request for MCM pseudo object: {}".format(thisObject))
 	cascade = sdos_frontend.cascade
-	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_tree_geometry":
-		return Response(response=treeGeometry.get_geometry_json(cascade=cascade), status=200, content_type="text/json")
-	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_mapping":
-		return Response(response=treeGeometry.get_slot_mapping_json(cascade=cascade), status=200,
-		                content_type="text/json")
+	if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_used_partitions":
+		return Response(response=treeGeometry.get_used_partitions_json(cascade=cascade), status=200, content_type="text/json")
+	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_partition_mapping":
+		return Response(response=treeGeometry.get_partition_mapping_json(cascade=cascade), status=200, content_type="text/json")
 	elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_cascade_stats":
 		return Response(response=treeGeometry.get_cascade_stats_json(cascade=cascade), status=200,
 		                content_type="text/json")
