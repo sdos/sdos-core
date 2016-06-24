@@ -124,7 +124,7 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
-	frontend = Frontend.SdosFrontend(containerName='sdt2', swiftUser = 'test:tester', swiftKey = 'testing')
+	frontend = Frontend.SdosFrontend(containerName='crypto-2', swiftUser = 'test:tester', swiftKey = 'testing')
 
 	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 1000, frontend)
 	#runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)
