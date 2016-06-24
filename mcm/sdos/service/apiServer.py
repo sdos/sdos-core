@@ -31,7 +31,7 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app, pseudoObjects
 from mcm.sdos.core import Frontend
 from mcm.sdos.crypto import DataCrypt
-from mcm.sdos.threading.Pool import SwiftPool
+from mcm.sdos.threading.Pool import SwiftPool, FEPool
 
 
 log = logging.getLogger()
@@ -110,8 +110,10 @@ def get_sdos_frontend(containerName, swiftTenant, swiftToken):
 	sp=SwiftPool()
 	sb = sp.getConn(swiftTenant, swiftToken)
 
+	fp = FEPool()
+
 	if sb.is_sdos_container(containerName):
-		return Frontend.SdosFrontend(containerName, swiftTenant, swiftToken)
+		return fp.getFE(containerName, swiftTenant, swiftToken)
 	else:
 		return False
 
