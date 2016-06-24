@@ -17,7 +17,7 @@
 	This service receives requests over a REST API that effectively behaves like a swift server
 	 requests are directly forwarded (using a http lib) to swift in order to retrieve objects, containers etc.
 	 a swift client lib is then used to issue further (new) requests to swift in order to retrieve the key cascade objects
-	 the first response form swift (containing the data object) is then modified (decryption) and passed to the client
+	 the first response form swift (containing the data object) is then modified (en/decryption) and passed to the client
 
 """
 
@@ -30,8 +30,8 @@ from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app, pseudoObjects
 from mcm.sdos.core import Frontend
-from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto import DataCrypt
+from mcm.sdos.threading.Pool import SwiftPool
 
 
 log = logging.getLogger()
@@ -99,7 +99,17 @@ def get_token(request):
 ##############################################################################
 
 def get_sdos_frontend(containerName, swiftTenant, swiftToken):
-	sb = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken)
+	"""
+	TODO: we really need a cascade-pool here and maybe locking in the cascade...
+	:param containerName:
+	:param swiftTenant:
+	:param swiftToken:
+	:return:
+	"""
+
+	sp=SwiftPool()
+	sb = sp.getConn(swiftTenant, swiftToken)
+
 	if sb.is_sdos_container(containerName):
 		return Frontend.SdosFrontend(containerName, swiftTenant, swiftToken)
 	else:
