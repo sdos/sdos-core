@@ -167,7 +167,9 @@ def handle_auth():
 	log.debug("swift response: {}".format(swiftHeaders))
 	replaceStorageUrl(swiftResponse=swiftHeaders)
 	log.debug("proxy response: {}".format(swiftHeaders))
-	return Response(response="", status=swiftStatus, headers=swiftHeaders)
+	r = Response(response="", status=swiftStatus)
+	r.headers = swiftHeaders
+	return r
 
 
 ##############################################################################
@@ -186,7 +188,9 @@ def handle_account(thisAuth):
 	myUrl = get_proxy_request_url(thisAuth)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	return Response(response=b, status=s, headers=h)
+	r = Response(response=b, status=s)
+	r.headers = h
+	return r
 
 
 """
@@ -201,7 +205,9 @@ def handle_container(thisAuth, thisContainer):
 	myUrl = get_proxy_request_url(thisAuth, thisContainer)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	return Response(response=b, status=s, headers=h)
+	r = Response(response=b, status=s)
+	r.headers = h
+	return r
 
 
 """
@@ -223,9 +229,13 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 200 and len(b) and sdos_frontend):
 		decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
-		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
+		r = Response(response=decrypted_b, status=s)
+		r.headers = strip_etag(h)
+		return r
 	else:
-		return Response(response=b, status=s, headers=h)
+		r =  Response(response=b, status=s)
+		r.headers = h
+		return r
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["DELETE"])
@@ -239,7 +249,9 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 	if (s == 204 and sdos_frontend):
 		sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
 		sdos_frontend.finish()
-	return Response(response=b, status=s, headers=h)
+	r = Response(response=b, status=s)
+	r.headers = h
+	return r
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
@@ -257,7 +269,9 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
 
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=headers,
 	                                       reqArgs=request.args, reqData=data)
-	return Response(response=b, status=s, headers=strip_etag(h))
+	r = Response(response=b, status=s)
+	r.headers = strip_etag(h)
+	return r
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST"])
