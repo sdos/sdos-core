@@ -89,6 +89,20 @@ def get_token(request):
 
 
 
+def get_proxy_request_url(thisAuth, thisContainer = None, thisObject = None):
+	"""
+	create the url under which this API proxy will reach its swift back end. basically this is the request url with a different hostname
+	:param thisAuth:
+	:param thisContainer:
+	:param thisObject:
+	:return:
+	"""
+	u = configuration.swift_storage_url.format(thisAuth)
+	if thisContainer:
+		u += "/" + thisContainer
+		if thisObject:
+			u += "/" + thisObject
+	return u
 
 
 
@@ -133,21 +147,21 @@ def handle_invalid_usage(e):
 	return "Internal Server Error", 500
 
 
-"""
+
+@app.route("/auth/v1.0", methods=["GET"])
+@log_requests
+def handle_auth():
+	"""
 	Forward the auth request to swift
 	replace the given storage url with our own:
 	'X-Storage-Url': 'http://192.168.209.204:8080/v1/AUTH_test'
 	becomes
 	'X-Storage-Url': 'http://localhost:4000/v1/AUTH_test'
-	
+
 	this is the first request any client makes; we passed on an auth-token from swift
 	which is used in further requests
-"""
-
-
-@app.route("/auth/v1.0", methods=["GET"])
-@log_requests
-def handle_auth():
+	:return:
+	"""
 	clientHeaders = request.headers
 	swiftStatus, swiftHeaders = httpBackend.doAuthGetToken(reqHead=clientHeaders)
 	log.debug("swift response: {}".format(swiftHeaders))
@@ -169,7 +183,7 @@ def handle_auth():
 @app.route("/v1/AUTH_<thisAuth>", methods=["HEAD", "POST", "GET", "PUT", "DELETE"])
 @log_requests
 def handle_account(thisAuth):
-	myUrl = configuration.swift_storage_url.format(thisAuth)
+	myUrl = get_proxy_request_url(thisAuth)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	return Response(response=b, status=s, headers=h)
@@ -184,8 +198,7 @@ def handle_account(thisAuth):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE", "HEAD"])
 @log_requests
 def handle_container(thisAuth, thisContainer):
-	myUrl = configuration.swift_storage_url.format(thisAuth)
-	myUrl += "/" + thisContainer
+	myUrl = get_proxy_request_url(thisAuth, thisContainer)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	return Response(response=b, status=s, headers=h)
@@ -204,8 +217,8 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 
 	if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
 		return pseudoObjects.dispatch(sdos_frontend, thisObject)
-	myUrl = configuration.swift_storage_url.format(thisAuth)
-	myUrl += "/" + thisContainer + "/" + thisObject
+
+	myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 200 and len(b) and sdos_frontend):
@@ -218,8 +231,7 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["DELETE"])
 @log_requests
 def handle_object_delete(thisAuth, thisContainer, thisObject):
-	myUrl = configuration.swift_storage_url.format(thisAuth)
-	myUrl += "/" + thisContainer + "/" + thisObject
+	myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
 
@@ -233,8 +245,7 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
 @log_requests
 def handle_object_put(thisAuth, thisContainer, thisObject):
-	myUrl = configuration.swift_storage_url.format(thisAuth)
-	myUrl += "/" + thisContainer + "/" + thisObject
+	myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
 	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 	if (sdos_frontend):
 		data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)

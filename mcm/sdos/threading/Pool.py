@@ -19,11 +19,13 @@ from mcm.sdos.threading import Borg
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.core import Frontend
 
+
 class SwiftPool(Borg):
 	"""
 		A singleton that manages a pool of swift connections per tenant/user
 		only one instance of this class exists at any time -> only one swift connection per user
 	"""
+
 	def __init__(self):
 		Borg.__init__(self)
 
@@ -34,7 +36,6 @@ class SwiftPool(Borg):
 
 	def addConn(self, swiftTenant, swiftToken, conn):
 		self.__pool[(swiftTenant, swiftToken)] = conn
-
 
 	def getConn(self, swiftTenant, swiftToken):
 		try:
@@ -58,6 +59,7 @@ class FEPool(Borg):
 		A singleton that manages a pool of swift connections per tenant/user
 		only one instance of this class exists at any time -> only one swift connection per user
 	"""
+
 	def __init__(self):
 		Borg.__init__(self)
 
@@ -68,7 +70,6 @@ class FEPool(Borg):
 
 	def addFE(self, container, swiftTenant, swiftToken, fe):
 		self.__pool[(container, swiftTenant, swiftToken)] = fe
-
 
 	def getFE(self, container, swiftTenant, swiftToken):
 		try:
