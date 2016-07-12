@@ -74,7 +74,10 @@ def replaceStorageUrl(swiftResponse):
 
 
 def strip_etag(h):
-	h.pop("Etag")
+	try:
+		h.pop("Etag")
+	except:
+		pass
 	return h
 
 
@@ -188,9 +191,7 @@ def handle_account(thisAuth):
 	myUrl = get_proxy_request_url(thisAuth)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	r = Response(response=b, status=s)
-	r.headers = h
-	return r
+	return Response(response=b, status=s, headers=h)
 
 
 """
@@ -205,9 +206,7 @@ def handle_container(thisAuth, thisContainer):
 	myUrl = get_proxy_request_url(thisAuth, thisContainer)
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
 	                                       reqArgs=request.args, reqData=request.data)
-	r = Response(response=b, status=s)
-	r.headers = h
-	return r
+	return Response(response=b, status=s, headers=h)
 
 
 """
@@ -229,11 +228,13 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
 	                                       reqArgs=request.args, reqData=request.data)
 	if (s == 200 and len(b) and sdos_frontend):
 		decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
-		r = Response(response=decrypted_b, status=s)
-		r.headers = strip_etag(h)
-		return r
+		# don't overwrite headers since the content length from the original response is incorrect; it accounts for padding...
+		# the Response object will determine the actual, correct size
+		return Response(response=decrypted_b, status=s, headers=strip_etag(h))
 	else:
-		r =  Response(response=b, status=s)
+		r = Response(response=b, status=s)
+		# this covers the unencrypted case (1) and also HEAD requests (2). We overwrite ALL the headers to retain
+		# the content size in the HEAD case
 		r.headers = h
 		return r
 
@@ -249,17 +250,15 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 	if (s == 204 and sdos_frontend):
 		sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
 		sdos_frontend.finish()
-	r = Response(response=b, status=s)
-	r.headers = h
-	return r
+	return Response(response=b, status=s, headers=h)
 
 
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT"])
+@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT", "POST"])
 @log_requests
 def handle_object_put(thisAuth, thisContainer, thisObject):
 	myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
 	sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
-	if (sdos_frontend):
+	if (sdos_frontend and len(request.data)):
 		data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
 		headers = add_sdos_flag(request.headers)
 		sdos_frontend.finish()
@@ -269,12 +268,4 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
 
 	s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=headers,
 	                                       reqArgs=request.args, reqData=data)
-	r = Response(response=b, status=s)
-	r.headers = strip_etag(h)
-	return r
-
-
-@app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["POST"])
-@log_requests
-def handle_object(thisAuth, thisContainer, thisObject):
-	raise HttpError("nothing")
+	return Response(response=b, status=s, headers=strip_etag(h))
