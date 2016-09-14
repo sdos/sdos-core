@@ -31,7 +31,7 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app, pseudoObjects
 from mcm.sdos.core import Frontend
 from mcm.sdos.crypto import DataCrypt
-from mcm.sdos.threading.Pool import SwiftPool, FEPool
+from mcm.sdos.parallelExecution.Pool import SwiftPool, FEPool
 
 
 log = logging.getLogger()

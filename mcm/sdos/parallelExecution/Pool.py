@@ -15,7 +15,7 @@
 	@author: tim
 
 """
-from mcm.sdos.threading import Borg
+from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.core import Frontend
 
