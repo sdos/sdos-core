@@ -8,6 +8,7 @@ The Secure Delete Object Store (SDOS) implements a key management mechanism that
 SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. SDOS can be used with any unmodified Swift client and server.
 
 ### The other parts of the MCM project are
+* [-- Deploy Environment (set up everything) --](https://github.com/timwaizenegger/mcm-deployEnvironment)
 * [Bluebox web-UI](https://github.com/timwaizenegger/mcm-bluebox)
 * [SDOS (Secure Delete Object Store) Cryptographic Deletion](https://github.com/timwaizenegger/mcm-sdos)
 * [Metadata Extractor](https://github.com/timwaizenegger/mcm-metadataExtractor)
