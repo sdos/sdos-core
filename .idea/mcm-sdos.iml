@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/mcm/sdos/swift" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/mcm/sdos/tester" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/mcm/sdos/util" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/mcm/sdos/parallelExecution" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.idea" />
       <excludeFolder url="file://$MODULE_DIR$/venvSDOS" />
     </content>
@@ -18,6 +19,7 @@
     <orderEntry type="module" module-name="mcm-retentionManager" />
     <orderEntry type="module" module-name="mcm-metadataExtractor" />
     <orderEntry type="module" module-name="mcm-bluebox" />
+    <orderEntry type="module" module-name="mcm-deployEnvironment" />
   </component>
   <component name="TestRunnerService">
     <option name="projectConfiguration" value="py.test" />

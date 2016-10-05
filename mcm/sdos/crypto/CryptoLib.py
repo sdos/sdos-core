@@ -41,7 +41,7 @@ class CryptoLib(object):
 	classdocs
 	"""
 
-	def __init__(self, key, outerHeader):
+	def __init__(self, key = "", outerHeader = b""):
 		"""
 		Constructor
 		"""
