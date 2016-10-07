@@ -12,3 +12,6 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
+import logging
+from mcm.sdos import configuration
+logging.basicConfig(level=configuration.log_level, format=configuration.log_format)

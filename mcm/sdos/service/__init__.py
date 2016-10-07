@@ -15,9 +15,8 @@
 
 import logging
 from flask import Flask
-from mcm.sdos import configuration
 
-logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
+
 log = logging.getLogger()
 
 app = Flask(__name__)
