@@ -23,7 +23,7 @@ def stripHeaders(headers):
 	headers.pop('Host')
 	headers.pop('User-Agent')
 	headers.pop('Content-Length')
-	headers.pop('Content-Type')
+	#headers.pop('Content-Type')
 	return headers
 
 
