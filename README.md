@@ -68,3 +68,9 @@ install new packages
 save new packages to requirements:
 
     pip freeze --local > requirements.txt
+    
+    
+update existing packages
+
+    pip freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs pip install -U
+    pip freeze --local > requirements.txt
