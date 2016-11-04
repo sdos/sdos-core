@@ -67,10 +67,10 @@ def add_mcm_id(response):
 ##############################################################################
 def replaceStorageUrl(swiftResponse):
 	swiftUrl = swiftResponse['X-Storage-Url']
-	if not swiftUrl.startswith(configuration.swift_storage_url.format("")):
+	if not swiftUrl.startswith(configuration.swift_store_url.format("")):
 		raise HttpError("swift returned wrong storage URL")
-	swiftAuthName = swiftUrl[len(configuration.swift_storage_url.format("")):]
-	swiftResponse['X-Storage-Url'] = configuration.proxy_storage_url.format(swiftAuthName)
+	swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
+	swiftResponse['X-Storage-Url'] = configuration.proxy_store_url.format(swiftAuthName)
 
 
 def strip_etag(h):
@@ -100,7 +100,7 @@ def get_proxy_request_url(thisAuth, thisContainer = None, thisObject = None):
 	:param thisObject:
 	:return:
 	"""
-	u = configuration.swift_storage_url.format(thisAuth)
+	u = configuration.swift_store_url.format(thisAuth)
 	if thisContainer:
 		u += "/" + thisContainer
 		if thisObject:

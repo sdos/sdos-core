@@ -42,7 +42,7 @@ class SwiftBackend(object):
 
 	def set_existing_authentication(self, tenant, token):
 		self.swiftC = swiftclient.client.Connection(preauthtoken=token,
-		                                            preauthurl=configuration.swift_storage_url.format(tenant),
+		                                            preauthurl=configuration.swift_store_url.format(tenant),
 		                                            retries=1,
 		                                            insecure='true')
 

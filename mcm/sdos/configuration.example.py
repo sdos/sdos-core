@@ -37,8 +37,8 @@ log_format = '%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s'
 	API / service settings
 """
 swift_auth_url = "http://192.168.209.204:8080/auth/v1.0"
-swift_storage_url = "http://192.168.209.204:8080/v1/AUTH_{}"
-proxy_storage_url = "http://localhost:3000/v1/AUTH_{}"
+swift_store_url = "http://192.168.209.204:8080/v1/AUTH_{}"
+proxy_store_url = "http://localhost:3000/v1/AUTH_{}"
 netPortDev = os.getenv("VCAP_APP_PORT", "3000")
 netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
 
