@@ -32,15 +32,27 @@ import logging, math, os
 log_level = logging.DEBUG
 log_format = '%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s'
 
-###############################################################################
 """
-	API / service settings
+################################################################################
+Server / runtime config
+################################################################################
 """
+
+"""
+this is the socket that the "dev" runner will listen on.
+VCAP_APP_* variables are used in cloudfoundry environments; the second parameter is the fallback which will be used normally
+note that with this config, the DEV runner is only locally visible. Only the PROD runner listening on 0.0.0.0 will be accessible form th eoutside
+"""
+netPortDev = os.getenv("VCAP_APP_PORT", "3000")
+netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
+
+netPortProd = os.getenv("VCAP_APP_PORT", "3000")
+netHostProd = os.getenv("VCAP_APP_HOST", "0.0.0.0")
+
 swift_auth_url = "http://192.168.209.204:8080/auth/v1.0"
 swift_store_url = "http://192.168.209.204:8080/v1/AUTH_{}"
 proxy_store_url = "http://localhost:3000/v1/AUTH_{}"
-netPortDev = os.getenv("VCAP_APP_PORT", "3000")
-netHostDev = os.getenv("VCAP_APP_HOST", "127.0.0.1")
+
 
 ###############################################################################
 """
