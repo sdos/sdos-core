@@ -17,13 +17,17 @@ from mcm.sdos import configuration
 
 log = logging.getLogger(__name__)
 
+def __safe_dict_pop(d, i):
+	try:
+		d.pop(i)
+	except:
+		pass
 
 def stripHeaders(headers):
 	headers = dict(headers)
-	headers.pop('Host')
-	headers.pop('User-Agent')
-	headers.pop('Content-Length')
-	#headers.pop('Content-Type')
+	__safe_dict_pop(headers, 'Host')
+	__safe_dict_pop(headers, 'User-Agent')
+	__safe_dict_pop(headers, 'Content-Length')
 	return headers
 
 
