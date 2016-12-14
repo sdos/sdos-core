@@ -14,3 +14,4 @@ python-swiftclient==3.1.0
 requests==2.11.1
 six==1.10.0
 Werkzeug==0.11.11
+coloredlogs==5.2
