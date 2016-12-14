@@ -12,6 +12,16 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
+import logging, coloredlogs
 from mcm.sdos import configuration
+
+log_format = '%(asctime)s %(module)s %(name)s[%(process)d] %(levelname)s %(message)s'
+field_styles = {'module': {'color': 'magenta'}, 'hostname': {'color': 'magenta'}, 'programname': {'color': 'cyan'},
+                'name': {'color': 'blue'}, 'levelname': {'color': 'black', 'bold': True}, 'asctime': {'color': 'green'}}
+
+coloredlogs.install(level=configuration.log_level, fmt=log_format, field_styles=field_styles)
+
+
+"""
 logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
+"""
