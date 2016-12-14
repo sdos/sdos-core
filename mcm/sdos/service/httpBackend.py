@@ -31,15 +31,15 @@ def stripHeaders(headers):
 	return headers
 
 
-def doAuthGetToken(reqHead):
+def doAuthGetToken(reqHead, method, data=None):
 	reqHead = stripHeaders(headers=reqHead)
 	log.debug("doAuthGetToken {}".format(reqHead))
-	r = requests.get(url=configuration.swift_auth_url, headers=reqHead)
+	r = requests.request(method=method, url=configuration.swift_auth_url, headers=reqHead, data=data)
 	b = r.content
 	h = dict(r.headers)
 	s = r.status_code
 	log.debug("got: {}, {}, {}".format(b, h, s))
-	return (s, h)
+	return (s, h, b)
 
 
 def doGenericRequest(method, reqUrl, reqHead, reqArgs, reqData):

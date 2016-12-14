@@ -25,7 +25,9 @@ class SwiftBackend(object):
 
 	def __init__(self, tenant=None, token=None, user=None, key=None):
 		"""
-		Constructor
+		we take either an existing authentication, or create a new one.
+		in SDOS-service mode, tenant/token are used since AUTH is already handled by the client.
+		user/key are only used for tests
 		"""
 		self.log = logging.getLogger(__name__)
 		self.log.debug('initializing...')

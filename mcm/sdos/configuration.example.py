@@ -50,6 +50,7 @@ netPortProd = os.getenv("VCAP_APP_PORT", "3000")
 netHostProd = os.getenv("VCAP_APP_HOST", "0.0.0.0")
 
 swift_auth_url = "http://192.168.209.204:8080/auth/v1.0"
+
 swift_store_url = "http://192.168.209.204:8080/v1/AUTH_{}"
 proxy_store_url = "http://localhost:3000/v1/AUTH_{}"
 
