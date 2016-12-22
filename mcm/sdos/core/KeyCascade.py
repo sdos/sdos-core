@@ -52,6 +52,14 @@ class Cascade(object):
 	def _getMasterKey(self):
 		return CryptoLib.digestKeyString('MASTERKEY')
 
+	def __is_object_key_slot(self, slot):
+		"""
+		slot IDs are globally counted
+		:param slot:
+		:return:
+		"""
+		return slot >= FIRST_OBJECT_KEY_SLOT
+
 	def finish(self):
 		# self.partitionStore.print()
 		self.keySlotMapper.finish()
@@ -84,6 +92,7 @@ class Cascade(object):
 		return self._getOrGeneratePartition(partitionId, key, createIfNotExists=True)
 
 	def storePartition(self, partition, key):
+		self.log.info('storing partition {}'.format(partition.getId()))
 		if (30 > self.log.getEffectiveLevel()):
 			partition.print()
 		pc = PartitionCrypt(key)
@@ -128,10 +137,17 @@ class Cascade(object):
 		return key
 
 	###############################################################################
+	# INDIVIDUAL DELETE IN CASCADE
 	###############################################################################
 	def deleteObjectKey(self, name):
+		"""
+		This function just deletes a single key anywhere in the cascade.
+		Not actually used in SDOS
+		:param name:
+		:return:
+		"""
 		slot = self.keySlotMapper.resetMapping(name)
-		self.log.debug('deleting object key for object: {} in slot: {}'.format(name, slot))
+		self.log.info('deleting object key for object: {} in slot: {}'.format(name, slot))
 
 		partitionId = self._getPartitionIdForSlot(slot)
 		partitionKey = self._getKeyFromCascade(partitionId)
@@ -140,15 +156,127 @@ class Cascade(object):
 		partition.resetKey(self._slotToLocalSlot(slot))
 		self.storePartition(partition, partitionKey)
 
+
+
+
+	###############################################################################
+	# SECURE DELETE
+	###############################################################################
 	def secureDeleteObjectKey(self, name):
+		#self.__secure_delete_bottom_up(name)
+		self.__secure_delete_top_down(name)
+
+
+	###############################################################################
+	# SECURE DELETE TOP DOWN
+	###############################################################################
+	def __secure_delete_top_down(self, name):
+		slot = self.keySlotMapper.getMapping(name)
+		#slot = self.keySlotMapper.resetMapping(name)
+		self.log.warning('SECURE DELETE top down: deleting object key for object: {} in slot: {}'.format(name, slot))
+		oldMasterKey = self._getMasterKey()
+		newMasterKey = self._getMasterKey()
+		self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
+
+
+	def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
+		"""
+		This is the main cascaded re-keying method; also batch-capable.
+		recursively we modify the partitions top-down along all necessary paths to
+		the object keys that should be cleared
+
+		:param partitionKeyOld: the current key for the partition
+		:param partitionKeyNew: the new key to use after modifying the partition
+		:param partitionId: id of the partition to modify
+		:param objectSlots: list of object-key slots to clear; these are the object that
+		get securely deleted by this re-keying operation. The IDs are used to determine the paths.
+		the slots here must be "globalslots" i.e. in the global slot range and not local to one partition
+		:return:
+		"""
+		# first we lod and decrypt the current partition
+		thisPartition = self.getPartition(partitionId, partitionKeyOld)
+		slotsToModify = self.__get_list_of_slots_to_branches(objectKeySlots, partitionId)
+		self.log.info("cascaded re-keying on partition {}, targeting object Key IDs {}. following paths to: {}".format(partitionId, objectKeySlots, slotsToModify))
+		for s in slotsToModify:
+			localSlot = self._slotToLocalSlot(s)
+			if self.__is_object_key_slot(s):
+				self.log.info(
+					"cascaded re-keying on object key partition {}, clearing slot {}".format(
+						partitionId, s))
+				thisPartition.resetKey(localSlot)
+			else:
+				self.log.info(
+					"cascaded re-keying on internal partition {}, replacing key in slot {}".format(
+						partitionId, s))
+				ok = thisPartition.getKey(localSlot)
+				nk = CryptoLib.generateRandomKey()
+				self.__cascaded_rekey_top_down(ok, nk, s, objectKeySlots)
+		self.storePartition(thisPartition, partitionKeyNew)
+
+
+	def __get_list_of_slots_to_branches(self, objectKeySlots, thisPartitionId):
+		"""
+		here we determine a list of global slots (equiv. to partition IDs)
+		that are children of this partition and are the next on a path to the
+		object keys
+		example: our cascade has 3 levels, partitions have 4 slots. object IDs 21..24 are in part. 5
+		which is the child of 1, which is the child of 0. OKID 25 is in part. 6, child of 1, child of 0
+		In [34]: __get_list_of_slots_to_branches(c, [21,22,23,25], 0)
+		Out[34]: {1}
+
+		In [35]: __get_list_of_slots_to_branches(c, [21,22,23,25], 1)
+		Out[35]: {5, 6}
+
+		In [36]: __get_list_of_slots_to_branches(c, [21,22,23,25], 5)
+		Out[36]: {21, 22, 23}
+
+		In [37]: __get_list_of_slots_to_branches(c, [21,22,23,25], 6)
+		Out[37]: {25}
+
+		:param objectKeySlots:
+		:param thisPartitionId:
+		:return:
+		"""
+		slots = set()
+		for oks in objectKeySlots:
+			thisSlot = oks
+			while thisSlot > thisPartitionId:
+				parent = self._getPartitionIdForSlot(thisSlot)
+				if parent == thisPartitionId:
+					slots.add(thisSlot)
+				thisSlot = parent
+		l = list(slots)
+		l.sort()
+		return l
+
+
+
+
+
+
+
+	###############################################################################
+	# SECURE DELETE BOTTOM-UP (legacy)
+	###############################################################################
+	def __secure_delete_bottom_up(self, name):
 		slot = self.keySlotMapper.resetMapping(name)
-		self.log.debug('SECURE deleting object key for object: {} in slot: {}'.format(name, slot))
+		self.log.warning('SECURE DELETE bottom up:  deleting object key for object: {} in slot: {}'.format(name, slot))
 		self._secureReplaceKey(slot, KeyPartition.EMPTY_KEY)
 
-	# does it work? O_O
+
 	def _secureReplaceKey(self, slot, newKey):
+		"""
+		This is the main cascaded re-keying method. It eventually reaches partition 0 and
+		replaces the master key. this method starts from bottom and goes up while processing nodes
+		the disadvantage is that it reads the whole path to the top in every level in order to naively retrieve the
+		partition key
+
+		:param slot:
+		:param newKey:
+		:return:
+		"""
 		partitionId = self._getPartitionIdForSlot(slot)
-		self.log.debug('SECURE replacing key in slot: {} in partition: {}'.format(slot, partitionId))
+		self.log.info('SECURE replacing key in slot: {} in partition: {}'.format(slot, partitionId))
 		if (0 == partitionId):
 			oldPartitionKey = self._getMasterKey()
 			newPartitionKey = self._getMasterKey()
@@ -165,6 +293,7 @@ class Cascade(object):
 
 		if (0 == partitionId):
 			# print('Replaced master key with: {}'.format(newPartitionKey))
+			self.log.error("replacing master key {} with {}".format(oldPartitionKey, newPartitionKey))
 			pass
 		else:
 			self._secureReplaceKey(partitionId, newPartitionKey)
