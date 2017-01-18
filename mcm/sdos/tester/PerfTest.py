@@ -12,13 +12,16 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
-import sys
 import io
-import time
+import logging
 import statistics
-from mcm.sdos.core import Frontend
+import sys
+import time
+
 from mcm.sdos import configuration
+from mcm.sdos.core import Frontend
+from sdos.core.CascadeProperties import CascadeProperties
+from sdos.swift import SwiftBackend
 
 logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
 log = logging.getLogger()
@@ -124,7 +127,9 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1', swiftUser = 'test:tester', swiftKey = 'testing')
-	frontend = Frontend.SdosFrontend(containerName='crypto-2', swiftUser = 'test:tester', swiftKey = 'testing')
+	sb = SwiftBackend.SwiftBackend(user='test:tester', key='testing')
+	cp = CascadeProperties()
+	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftBackend=sb, cascadeProperties=cp)
 
 	runPutTest('/home/tim/sdos-measure/testdata/1kB', 0, 1000, frontend)
 	#runGetTest('/home/tim/sdos-measure/testdata/result', 0, 10, frontend)

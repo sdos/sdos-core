@@ -15,9 +15,11 @@
 import logging
 import sys
 
+from mcm.sdos import configuration
 from mcm.sdos.core import Frontend
 from mcm.sdos.util import treeGeometry
-from mcm.sdos import configuration
+from sdos.core import CascadeProperties
+from sdos.swift import SwiftBackend
 
 logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
 log = logging.getLogger()
@@ -31,7 +33,9 @@ if __name__ == '__main__':
 	log.debug(sys.flags)
 	# frontend = Frontend.DirectFrontend(containerName='sdosTest1')
 	# frontend = Frontend.CryptoFrontend(containerName='sdosTest1')
-	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftUser = 'test:tester', swiftKey = 'testing')
+	sb = SwiftBackend.SwiftBackend(user='test:tester', key='testing')
+	cp = CascadeProperties()
+	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftBackend=sb, cascadeProperties=cp)
 	cascade = frontend.cascade
 
 	print(treeGeometry.get_used_partitions_json(cascade=cascade))

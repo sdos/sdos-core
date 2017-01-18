@@ -15,9 +15,10 @@
 	@author: tim
 
 """
+from mcm.sdos.core import Frontend
 from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
-from mcm.sdos.core import Frontend
+from sdos.core.CascadeProperties import CascadeProperties
 
 
 class SwiftPool(Borg):
@@ -56,8 +57,8 @@ class SwiftPool(Borg):
 
 class FEPool(Borg):
 	"""
-		A singleton that manages a pool of swift connections per tenant/user
-		only one instance of this class exists at any time -> only one swift connection per user
+		A singleton that manages a pool of Frontends; i.e. key cascades with attached swift backends
+		only one cascade exists per container/user combination
 	"""
 
 	def __init__(self):
@@ -75,7 +76,11 @@ class FEPool(Borg):
 		try:
 			return self.__pool[(container, swiftTenant, swiftToken)]
 		except:
-			fe = Frontend.SdosFrontend(container, swiftTenant, swiftToken)
+			sp = SwiftPool()
+			sb = sp.getConn(swiftTenant, swiftToken)
+			props = sb.get_sdos_properties(container)
+			cascadeProperties = CascadeProperties(partition_bits=props[1], tree_height=props[2])
+			fe = Frontend.SdosFrontend(container, swiftBackend=sb, cascadeProperties=cascadeProperties)
 			self.addFE(container, swiftTenant, swiftToken, fe)
 			return fe
 

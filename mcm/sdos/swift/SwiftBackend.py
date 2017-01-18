@@ -98,3 +98,19 @@ class SwiftBackend(object):
 		self._assertConnection()
 		t = self.swiftC.head_container(containerName)
 		return t.get("x-container-meta-sdos", False) == "True"
+
+	def get_sdos_properties(self, containerName):
+		"""
+		we read the tree height and partition-bits from the container in order to init the Key Cascade
+		:param containerName:
+		:return: (is_sdos, height, part_bits)
+		"""
+		self.log.debug('checking for SDOS properties on container: {}'.format(containerName))
+		self._assertConnection()
+		t = self.swiftC.head_container(containerName)
+		r = (
+			t.get("x-container-meta-sdos", False) == "True",
+			t.get("x-container-meta-sdospartitionbits", 0),
+			t.get("x-container-meta-sdosheight", 0)
+		)
+		return r
