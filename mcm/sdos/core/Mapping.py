@@ -35,8 +35,9 @@ class KeySlotMapper(object):
         self.usedList = set()
         # self.freeList = dict() # no free list used ATM
         self.mappingStore = mappingStore
-        self.readMapping()
         self.cascadeProperties = cascadeProperties
+        self.readMapping()
+
 
     def _populateUsedList(self):
         for t in self.mapping.values():
