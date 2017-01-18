@@ -29,6 +29,9 @@ from mcm.sdos.crypto import CryptoLib
 ###############################################################################
 ###############################################################################
 ###############################################################################
+from sdos import configuration
+
+
 class Cascade(object):
     def __init__(self, partitionStore, keySlotMapper, cascadeProperties):
         self.log = logging.getLogger(__name__)
@@ -96,7 +99,7 @@ class Cascade(object):
 
     def storePartition(self, partition, key):
         self.log.info('storing partition {}'.format(partition.getId()))
-        if (30 > self.log.getEffectiveLevel()):
+        if (configuration.log_level == logging.DEBUG):
             partition.print()
         pc = PartitionCrypt(key)
         by = pc.encryptBytesIO(partition.serializeToBytesIO())
@@ -353,9 +356,8 @@ class KeyPartition(object):
         self.cascadeProperties = cascadeProperties
         self.keys = [self.EMPTY_KEY] * self.cascadeProperties.PARTITION_SIZE
         self.partitionID = partitionId
-        print("ll")
-        #self.loop = asyncio.new_event_loop()
-        #self.lock = Lock(loop=self.loop)
+        self.loop = asyncio.new_event_loop()
+        self.lock = Lock(loop=self.loop)
 
 
     def print(self):
