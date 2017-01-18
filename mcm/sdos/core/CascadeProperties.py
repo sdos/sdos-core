@@ -60,6 +60,6 @@ class CascadeProperties(object):
             'object key IDs are in the range {}..{}'.format(self.FIRST_OBJECT_KEY_SLOT, self.LAST_OBJCT_KEY_SLOT))
 
     def __validate_properties(self, partition_bits, tree_height):
-        if not (partition_bits > 0 and partition_bits < 32 and tree_height > 0 and tree_height < 64):
+        if not (partition_bits >= 2 and partition_bits < 32 and tree_height > 0 and tree_height < 64):
             raise ValueError(
                 "Cascade properties invalid: partition_bits {} -- tree_height {}".format(partition_bits, tree_height))

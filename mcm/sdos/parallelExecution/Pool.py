@@ -15,6 +15,7 @@
 	@author: tim
 
 """
+import logging
 from mcm.sdos.core import Frontend
 from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
@@ -70,11 +71,15 @@ class FEPool(Borg):
 			self.__pool = dict()
 
 	def addFE(self, container, swiftTenant, swiftToken, fe):
-		self.__pool[(container, swiftTenant, swiftToken)] = fe
+		#self.__pool[(container, swiftTenant, swiftToken)] = fe
+		# TODO: multi-backend in the Key Cascade is necessary.
+		# currently, we would re-use the first users token for all requests...
+		self.__pool[(container, swiftTenant)] = fe
 
 	def getFE(self, container, swiftTenant, swiftToken):
+		logging.info("looking for Frontend for: container {}, swiftTenant {}, swiftToken {}".format(container, swiftTenant, swiftToken))
 		try:
-			return self.__pool[(container, swiftTenant, swiftToken)]
+			return self.__pool[(container, swiftTenant)]
 		except:
 			sp = SwiftPool()
 			sb = sp.getConn(swiftTenant, swiftToken)

@@ -15,6 +15,8 @@
 import io
 import logging
 import math
+from asyncio import Lock
+import asyncio
 from mcm.sdos.crypto.PartitionCrypt import PartitionCrypt
 from mcm.sdos.crypto import CryptoLib
 
@@ -33,6 +35,7 @@ class Cascade(object):
         self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
         self.cascadeProperties = cascadeProperties
+        self.partitionCache = dict()
         self.log.info(
             "Initializing new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
@@ -76,10 +79,13 @@ class Cascade(object):
             pc = PartitionCrypt(key)
             partition.deserializeFromBytesIO(pc.decryptBytesIO(by))
             by.close()
-
+        self.partitionCache[partitionId] = partition
         return partition
 
     def getPartition(self, partitionId, key):
+        if partitionId in self.partitionCache:
+            logging.info("getting cached partition: {}".format(partitionId))
+            return self.partitionCache[partitionId]
         try:
             return self._getOrGeneratePartition(partitionId, key, createIfNotExists=False)
         except SystemError:
@@ -95,6 +101,9 @@ class Cascade(object):
         pc = PartitionCrypt(key)
         by = pc.encryptBytesIO(partition.serializeToBytesIO())
         self.partitionStore.writePartition(partition.getId(), by)
+        print("unlocking " + str(partition.getId()))
+        #self.lockedPartitions.remove(partition.getId())
+        #partition.lock.release()
 
     ###############################################################################
     ###############################################################################
@@ -344,6 +353,9 @@ class KeyPartition(object):
         self.cascadeProperties = cascadeProperties
         self.keys = [self.EMPTY_KEY] * self.cascadeProperties.PARTITION_SIZE
         self.partitionID = partitionId
+        print("ll")
+        #self.loop = asyncio.new_event_loop()
+        #self.lock = Lock(loop=self.loop)
 
 
     def print(self):
@@ -357,10 +369,12 @@ class KeyPartition(object):
         print('+' + '----' * 32 + '+')
 
     def setKey(self, slot, key):
+        #yield from self.lock
         self.log.debug('partition {} setting slot {} to key {}'.format(self.partitionID, slot, key))
         self.keys[slot] = key
 
     def resetKey(self, slot):
+        #self.lock.acquire()
         self.keys[slot] = self.EMPTY_KEY
 
     def getKey(self, slot):
