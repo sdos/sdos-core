@@ -14,6 +14,7 @@
 
 import logging
 import io
+import threading
 
 
 ###############################################################################
@@ -31,20 +32,30 @@ class KeySlotMapper(object):
         the used/free lists are derived from this and don't get stored
         """
         self.log = logging.getLogger(__name__)
+        self.is_mapping_clean = True
         self.mapping = dict()
         self.usedList = set()
         # self.freeList = dict() # no free list used ATM
         self.mappingStore = mappingStore
         self.cascadeProperties = cascadeProperties
         self.readMapping()
+        self.__watch_and_store_mapping()
 
 
-    def _populateUsedList(self):
+    def __populateUsedList(self):
         for t in self.mapping.values():
             self.usedList.add(t)
 
     def finish(self):
         self.storeMapping()
+
+    def __watch_and_store_mapping(self):
+        self.log.debug("checking mapping consistency...")
+        if not self.is_mapping_clean:
+            self.log.info("local mapping changed; writing to store")
+            self.storeMapping()
+            self.is_mapping_clean = True
+        threading.Timer(10, self.__watch_and_store_mapping).start()
 
     def getMappingDict(self):
         return self.mapping
@@ -62,6 +73,7 @@ class KeySlotMapper(object):
         raise SystemError('no more free key slots available')
 
     def setMapping(self, name, slot):
+        self.is_mapping_clean = False
         self.mapping[str(name)] = slot
         self.usedList.add(slot)
         self.log.debug('set mapping: {} {}, {} {}'.format(name, type(name), slot, type(slot)))
@@ -78,6 +90,7 @@ class KeySlotMapper(object):
         return self.mapping[name]
 
     def resetMapping(self, name):
+        self.is_mapping_clean = False
         slot = self.mapping.pop(name)
         self.usedList.remove(slot)
         return slot
@@ -115,11 +128,15 @@ class KeySlotMapper(object):
         by.close()
 
     def storeMapping(self):
+        self.log.info("storing mapping")
         self.mappingStore.writeMapping(self.serializeToBytesIO())
 
     def readMapping(self):
         by = self.mappingStore.readMapping()
         if by:
+            self.log.info("retrieved stored mapping")
             self.deserializeFromBytesIO(by)
+            self.__populateUsedList()
+            self.is_mapping_clean = True
         else:
             self.log.error('retrieved no stored mapping. starting empty...')

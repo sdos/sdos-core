@@ -299,7 +299,6 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
     if (s == 204 and sdos_frontend):
         sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
-        sdos_frontend.finish()
     return Response(response=b, status=s, headers=h)
 
 
@@ -311,7 +310,6 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
     if (sdos_frontend and len(request.data)):
         data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
         headers = add_sdos_flag(request.headers)
-        sdos_frontend.finish()
     else:
         data = request.data
         headers = request.headers
