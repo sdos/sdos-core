@@ -11,7 +11,7 @@
 	This software may be modified and distributed under the terms
 	of the MIT license.  See the LICENSE file for details.
 """
-
+import sdos.core.KeyPartition
 from mcm.sdos.core import KeyCascade
 from mcm.sdos.core.PartitionStore import PartitionStore
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 # print(sorted(hvals.values(), reverse=True))
 
 if __name__ == 'mm__main__':
-    p = KeyCascade.KeyPartition(0)
+    p = sdos.core.KeyPartition.KeyPartition(0)
     p.print()
 
 """
