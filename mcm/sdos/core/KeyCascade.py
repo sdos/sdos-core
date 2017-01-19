@@ -15,6 +15,7 @@
 import logging
 import math
 
+from sdos.core.KeyPartitionCache import KeyPartitionCache
 from sdos.crypto import CryptoLib
 from sdos.crypto.PartitionCrypt import PartitionCrypt
 from sdos import configuration
@@ -28,10 +29,9 @@ class Cascade(object):
 
     def __init__(self, partitionStore, keySlotMapper, cascadeProperties):
         self.log = logging.getLogger(__name__)
-        self.partitionStore = partitionStore
+        self.partitionStore = KeyPartitionCache(partitionStore=partitionStore)#partitionStore
         self.keySlotMapper = keySlotMapper
         self.cascadeProperties = cascadeProperties
-        self.partitionCache = dict()
         self.log.info(
             "Initializing new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
@@ -101,9 +101,6 @@ class Cascade(object):
     # Partition load / store
     ###############################################################################
     def getPartition(self, partitionId, key):
-        if partitionId in self.partitionCache:
-            logging.info("getting cached partition: {}".format(partitionId))
-            return self.partitionCache[partitionId]
         try:
             return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=False)
         except SystemError:
@@ -124,7 +121,6 @@ class Cascade(object):
             pc = PartitionCrypt(key)
             partition.deserializeFromBytesIO(pc.decryptBytesIO(by))
             by.close()
-        self.partitionCache[partitionId] = partition
         return partition
 
     def __storePartition(self, partition, key):
