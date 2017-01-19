@@ -50,7 +50,7 @@ class CascadeProperties(object):
         logging.info('Initializing new Cascade properties...')
         logging.info('partition bits: {}'.format(self.PARTITION_BITS))
         logging.info('partitions have {} slots'.format(self.PARTITION_SIZE))
-        logging.info('cascade height without root: {}'.format(self.TREE_HEIGHT))
+        logging.info('cascade height (without root): {}'.format(self.TREE_HEIGHT))
         logging.info(
             'total number of partitions: {}, number of internal partitions {}'.format(self.TOTAL_NUMER_OF_PARTITIONS,
                                                                                       self.NUMBER_OF_PARTITION_KEY_PARTITIONS))

@@ -15,24 +15,16 @@
 import io
 import logging
 import math
-from asyncio import Lock
-import asyncio
 from mcm.sdos.crypto.PartitionCrypt import PartitionCrypt
 from mcm.sdos.crypto import CryptoLib
-
-
-###############################################################################
-###############################################################################
-
-
-
-###############################################################################
-###############################################################################
-###############################################################################
 from sdos import configuration
 
 
 class Cascade(object):
+    """
+    Key Cascade main object. One instance of this should exist for each key-cascade (for each container)
+    """
+
     def __init__(self, partitionStore, keySlotMapper, cascadeProperties):
         self.log = logging.getLogger(__name__)
         self.partitionStore = partitionStore
@@ -44,15 +36,47 @@ class Cascade(object):
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
 
     ###############################################################################
+    # Helpers for visualizing, debugging, statistics...
     ###############################################################################
-    def _getPartitionIdForSlot(self, slot):
+    def get_used_partitions(self):
+        def rekParts(listNow):
+            if not listNow:
+                return []
+            n = set()
+            for i in listNow:
+                s = self.__getPartitionIdForSlot(i)
+                n.add(s)
+                if (i == 0): return n
+            return n.union(rekParts(n))
+
+        p = rekParts(self.keySlotMapper.getUsedList())
+        return list(p)
+
+    def get_reverse_object_key_partition_mapping(self):
+        """
+        produces a dict that maps obj key partitions to their object key content.
+        example for partition 257:
+        {"257": [{"objName": "WindowsInstaller.c", "slot": 157}, {"objName": "Inheritance.java", "slot": 23}
+        :return:
+        """
+        result = dict()
+        for objName, objKeySlot in self.keySlotMapper.getMappingDict().items():
+            objKeyPartition = self.__getPartitionIdForSlot(objKeySlot)
+            slotInPartition = self.__globalSlotToLocalSlot(objKeySlot)
+            # print(objName, objKeySlot, objKeyPartition, slotInPartition)
+            partition = result.get(objKeyPartition, [])
+            partition.append({"slot": slotInPartition, "objName": objName})
+            result[objKeyPartition] = partition
+        return result
+
+    ###############################################################################
+    # Utility
+    ###############################################################################
+    def __getPartitionIdForSlot(self, slot):
         return max(0, math.floor((slot - 1) / self.cascadeProperties.PARTITION_SIZE))
 
-    def _slotToLocalSlot(self, slot):
+    def __globalSlotToLocalSlot(self, slot):
         return (slot - 1) % self.cascadeProperties.PARTITION_SIZE
-
-    def _getMasterKey(self):
-        return CryptoLib.digestKeyString('MASTERKEY')
 
     def __is_object_key_slot(self, slot):
         """
@@ -67,13 +91,30 @@ class Cascade(object):
         self.keySlotMapper.finish()
 
     ###############################################################################
+    # Master Key
     ###############################################################################
+    def __getCurrentMasterKey(self):
+        return CryptoLib.digestKeyString('MASTERKEY')
 
-    def _getOrGeneratePartition(self, partitionId, key, createIfNotExists=False):
+    ###############################################################################
+    # Partition load / store
+    ###############################################################################
+    def getPartition(self, partitionId, key):
+        if partitionId in self.partitionCache:
+            logging.info("getting cached partition: {}".format(partitionId))
+            return self.partitionCache[partitionId]
+        try:
+            return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=False)
+        except SystemError:
+            return None
+
+    def generatePartition(self, partitionId, key):
+        return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=True)
+
+    def __getOrGeneratePartition(self, partitionId, key, createIfNotExists=False):
         by = self.partitionStore.readPartition(partitionId)
         self.log.info('getting partition: {}, bytestream object is: {}, createIfNotExists={}'.format(partitionId, by,
                                                                                                      createIfNotExists))
-
         if not by and not createIfNotExists:
             raise SystemError('requested partition does not exist. Id: {}'.format(partitionId))
 
@@ -85,30 +126,16 @@ class Cascade(object):
         self.partitionCache[partitionId] = partition
         return partition
 
-    def getPartition(self, partitionId, key):
-        if partitionId in self.partitionCache:
-            logging.info("getting cached partition: {}".format(partitionId))
-            return self.partitionCache[partitionId]
-        try:
-            return self._getOrGeneratePartition(partitionId, key, createIfNotExists=False)
-        except SystemError:
-            return None
-
-    def generatePartition(self, partitionId, key):
-        return self._getOrGeneratePartition(partitionId, key, createIfNotExists=True)
-
-    def storePartition(self, partition, key):
+    def __storePartition(self, partition, key):
         self.log.info('storing partition {}'.format(partition.getId()))
         if (configuration.log_level == logging.DEBUG):
             partition.print()
         pc = PartitionCrypt(key)
         by = pc.encryptBytesIO(partition.serializeToBytesIO())
         self.partitionStore.writePartition(partition.getId(), by)
-        print("unlocking " + str(partition.getId()))
-        #self.lockedPartitions.remove(partition.getId())
-        #partition.lock.release()
 
     ###############################################################################
+    # Get new key, get existing key
     ###############################################################################
     def getKeyForNewObject(self, name):
         slot = self.keySlotMapper.getOrCreateMapping(name)
@@ -120,9 +147,9 @@ class Cascade(object):
         return self._getKeyFromCascade(slot, createIfNotExists=False)
 
     def _getKeyFromCascade(self, slot, createIfNotExists=False):
-        partitionId = self._getPartitionIdForSlot(slot)
+        partitionId = self.__getPartitionIdForSlot(slot)
         if (0 == partitionId):
-            partitionKey = self._getMasterKey()
+            partitionKey = self.__getCurrentMasterKey()
         else:
             partitionKey = self._getKeyFromCascade(partitionId, createIfNotExists)
 
@@ -133,11 +160,11 @@ class Cascade(object):
         elif not partition and not createIfNotExists:
             raise SystemError('requested partition {} does not exist'.format(partitionId))
 
-        localSlot = self._slotToLocalSlot(slot)
+        localSlot = self.__globalSlotToLocalSlot(slot)
         key = partition.getKey(localSlot)
         if not key and createIfNotExists:
             key = partition.generateKey(localSlot)
-            self.storePartition(partition, partitionKey)
+            self.__storePartition(partition, partitionKey)
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
 
@@ -146,7 +173,7 @@ class Cascade(object):
         return key
 
     ###############################################################################
-    # INDIVIDUAL DELETE IN CASCADE
+    # Delete: individual key
     ###############################################################################
     def deleteObjectKey(self, name):
         """
@@ -158,15 +185,15 @@ class Cascade(object):
         slot = self.keySlotMapper.resetMapping(name)
         self.log.info('deleting object key for object: {} in slot: {}'.format(name, slot))
 
-        partitionId = self._getPartitionIdForSlot(slot)
+        partitionId = self.__getPartitionIdForSlot(slot)
         partitionKey = self._getKeyFromCascade(partitionId)
         partition = self.getPartition(partitionId, partitionKey)
 
-        partition.resetKey(self._slotToLocalSlot(slot))
-        self.storePartition(partition, partitionKey)
+        partition.resetKey(self.__globalSlotToLocalSlot(slot))
+        self.__storePartition(partition, partitionKey)
 
     ###############################################################################
-    # SECURE DELETE
+    # Delete: secure delete
     ###############################################################################
     def secureDeleteObjectKey(self, name):
         # self.__secure_delete_bottom_up(name)
@@ -174,13 +201,12 @@ class Cascade(object):
 
     ###############################################################################
     # SECURE DELETE TOP DOWN
-    ###############################################################################
     def __secure_delete_top_down(self, name):
-        slot = self.keySlotMapper.getMapping(name)
-        # slot = self.keySlotMapper.resetMapping(name)
+        # slot = self.keySlotMapper.getMapping(name)
+        slot = self.keySlotMapper.resetMapping(name)
         self.log.warning('SECURE DELETE top down: deleting object key for object: {} in slot: {}'.format(name, slot))
-        oldMasterKey = self._getMasterKey()
-        newMasterKey = self._getMasterKey()
+        oldMasterKey = self.__getCurrentMasterKey()
+        newMasterKey = self.__getCurrentMasterKey()
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
@@ -203,7 +229,7 @@ class Cascade(object):
         self.log.info("cascaded re-keying on partition {}, targeting object Key IDs {}. following paths to: {}".format(
             partitionId, objectKeySlots, slotsToModify))
         for s in slotsToModify:
-            localSlot = self._slotToLocalSlot(s)
+            localSlot = self.__globalSlotToLocalSlot(s)
             if self.__is_object_key_slot(s):
                 self.log.info(
                     "cascaded re-keying on object key partition {}, clearing slot {}".format(
@@ -216,7 +242,7 @@ class Cascade(object):
                 ok = thisPartition.getKey(localSlot)
                 nk = CryptoLib.generateRandomKey()
                 self.__cascaded_rekey_top_down(ok, nk, s, objectKeySlots)
-        self.storePartition(thisPartition, partitionKeyNew)
+        self.__storePartition(thisPartition, partitionKeyNew)
 
     def __get_list_of_slots_to_branches(self, objectKeySlots, thisPartitionId):
         """
@@ -245,7 +271,7 @@ class Cascade(object):
         for oks in objectKeySlots:
             thisSlot = oks
             while thisSlot > thisPartitionId:
-                parent = self._getPartitionIdForSlot(thisSlot)
+                parent = self.__getPartitionIdForSlot(thisSlot)
                 if parent == thisPartitionId:
                     slots.add(thisSlot)
                 thisSlot = parent
@@ -255,7 +281,6 @@ class Cascade(object):
 
     ###############################################################################
     # SECURE DELETE BOTTOM-UP (legacy)
-    ###############################################################################
     def __secure_delete_bottom_up(self, name):
         slot = self.keySlotMapper.resetMapping(name)
         self.log.warning('SECURE DELETE bottom up:  deleting object key for object: {} in slot: {}'.format(name, slot))
@@ -272,21 +297,21 @@ class Cascade(object):
         :param newKey:
         :return:
         """
-        partitionId = self._getPartitionIdForSlot(slot)
+        partitionId = self.__getPartitionIdForSlot(slot)
         self.log.info('SECURE replacing key in slot: {} in partition: {}'.format(slot, partitionId))
         if (0 == partitionId):
-            oldPartitionKey = self._getMasterKey()
-            newPartitionKey = self._getMasterKey()
+            oldPartitionKey = self.__getCurrentMasterKey()
+            newPartitionKey = self.__getCurrentMasterKey()
         else:
             oldPartitionKey = self._getKeyFromCascade(partitionId)
             newPartitionKey = CryptoLib.generateRandomKey()
 
         partition = self.getPartition(partitionId, oldPartitionKey)
 
-        localSlot = self._slotToLocalSlot(slot)
+        localSlot = self.__globalSlotToLocalSlot(slot)
         partition.setKey(localSlot, newKey)
 
-        self.storePartition(partition, newPartitionKey)
+        self.__storePartition(partition, newPartitionKey)
 
         if (0 == partitionId):
             # print('Replaced master key with: {}'.format(newPartitionKey))
@@ -296,55 +321,13 @@ class Cascade(object):
             self._secureReplaceKey(partitionId, newPartitionKey)
 
 
-            ###############################################################################
-            ###############################################################################
-            ###############################################################################
-
-    def get_used_partitions(self):
-        def rekParts(listNow):
-            if not listNow:
-                return []
-            n = set()
-            for i in listNow:
-                s = self._getPartitionIdForSlot(i)
-                n.add(s)
-                if (i == 0): return n
-            return n.union(rekParts(n))
-
-        p = rekParts(self.keySlotMapper.getUsedList())
-        return list(p)
-
-    def get_reverse_object_key_partition_mapping(self):
-        """
-        produces a dict that maps obj key partitions to their object key content.
-        example for partition 257:
-        {"257": [{"objName": "WindowsInstaller.c", "slot": 157}, {"objName": "Inheritance.java", "slot": 23}
-        :return:
-        """
-        result = dict()
-        for objName, objKeySlot in self.keySlotMapper.getMappingDict().items():
-            objKeyPartition = self._getPartitionIdForSlot(objKeySlot)
-            slotInPartition = self._slotToLocalSlot(objKeySlot)
-            # print(objName, objKeySlot, objKeyPartition, slotInPartition)
-            partition = result.get(objKeyPartition, [])
-            partition.append({"slot": slotInPartition, "objName": objName})
-            result[objKeyPartition] = partition
-        return result
-
-
 ###############################################################################
 ###############################################################################
 ###############################################################################
-def getTreeLevel():
-    # not sure how this can be calculated (without recursion/iteration)...
-    # something like: math.log((i-math.floor((i-1)/n)), n)
-    # but we currently don't need it anyway :D
-    return None
-
-
+###############################################################################
 class KeyPartition(object):
     """
-    classdocs
+    An individual node (partition) form the tree
     """
     EMPTY_KEY = '\0'.encode() * 32
 
@@ -356,9 +339,6 @@ class KeyPartition(object):
         self.cascadeProperties = cascadeProperties
         self.keys = [self.EMPTY_KEY] * self.cascadeProperties.PARTITION_SIZE
         self.partitionID = partitionId
-        self.loop = asyncio.new_event_loop()
-        self.lock = Lock(loop=self.loop)
-
 
     def print(self):
         print()
@@ -370,13 +350,16 @@ class KeyPartition(object):
             print('| Key %i: \t %s' % (i, self.keys[i])) if self.keys[i] != self.EMPTY_KEY else None
         print('+' + '----' * 32 + '+')
 
+    ###############################################################################
+    # Key / slot operations
+    ###############################################################################
     def setKey(self, slot, key):
-        #yield from self.lock
+        # yield from self.lock
         self.log.debug('partition {} setting slot {} to key {}'.format(self.partitionID, slot, key))
         self.keys[slot] = key
 
     def resetKey(self, slot):
-        #self.lock.acquire()
+        # self.lock.acquire()
         self.keys[slot] = self.EMPTY_KEY
 
     def getKey(self, slot):
@@ -391,6 +374,9 @@ class KeyPartition(object):
         self.setKey(slot, key)
         return key
 
+    ###############################################################################
+    # Navigate / traverse cascade structure
+    ###############################################################################
     def getId(self):
         return self.partitionID
 
@@ -403,6 +389,9 @@ class KeyPartition(object):
     def getChildIdAtSlot(self, slotId):
         return ((self.partitionID * self.cascadeProperties.PARTITION_SIZE) + 1 + slotId)
 
+    ###############################################################################
+    # Serialization
+    ###############################################################################
     def serializeToBytesIO(self):
         by = io.BytesIO()
         by.write(self.partitionID.to_bytes(length=self.cascadeProperties.BYTES_FOR_PARTITION_IDs, byteorder='little',
@@ -414,98 +403,11 @@ class KeyPartition(object):
 
     def deserializeFromBytesIO(self, by):
         assert (len(by.getbuffer()) == (
-        len(self.EMPTY_KEY) * self.cascadeProperties.PARTITION_SIZE) + self.cascadeProperties.BYTES_FOR_PARTITION_IDs)
+            len(
+                self.EMPTY_KEY) * self.cascadeProperties.PARTITION_SIZE) + self.cascadeProperties.BYTES_FOR_PARTITION_IDs)
         by.seek(0)
         self.partitionID = int.from_bytes(by.read(self.cascadeProperties.BYTES_FOR_PARTITION_IDs), byteorder='little',
                                           signed=False)
         for i in range(self.cascadeProperties.PARTITION_SIZE):
             self.keys[i] = by.read(len(self.EMPTY_KEY))
         by.__del__()
-
-
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-###############################################################################
-"""
-def insertNewObjectKey(ids, key, partitionStore):
-	partitionIds = ids[0]
-	slotIds = ids[1]
-	#print(partitionIds) # ID order matters! root -> leaf
-	
-	partitions = partitionStore.readPartitions(partitionIds)
-	#print(partitions)
-	
-	#insert actual key into last partition
-	partitions[partitionIds[-1]].setKey(slotIds[-1], key)
-	
-def retrieveObjectKey(ids, partitionStore):
-	partitionIds = ids[0]
-	slotIds = ids[1]
-	#print(partitionIds) # ID order matters! root -> leaf
-	partitions = partitionStore.readPartitions(partitionIds)
-	return partitions[partitionIds[-1]].getKey(slotIds[-1])
-"""
-###############################################################################
-###############################################################################
-###############################################################################
-"""
-def getCascadePathIds(name):
-	partitionIds = [None] * (TREE_HEIGHT)
-	slotIds = [None] * (TREE_HEIGHT)
-	fullHash = hashName(name)
-	# get byte array from hash values; 64 bits in size
-	b = fullHash.to_bytes(length=8, byteorder='little', signed=False)
-	for i in range(0, (TREE_HEIGHT)):
-		partitionIds[i] = '%i_%i' % (i, int.from_bytes(b[:i], byteorder='little', signed=False))
-		slotIds[i] = b[i]
-	return partitionIds, slotIds
-
-def hashName(name):
-	return hash4(name)
-
-def hash4(name):
-	# "None" hash; only interpret name as integer
-	return int(name)
-
-def hash3(name):
-	# Mersenne Twister pseudo random number generator based hash
-	numberSlots = KeyPartition.NUMBER_SLOTS
-	b = name.encode()
-	i = int.from_bytes(b, byteorder='little', signed=False)
-
-	r = random.Random()
-	r.seed(i)
-	h = r.randint(0, numberSlots)
-	return h
-
-def hash2(name):
-	# prime modulo hash
-	numberSlots = KeyPartition.NUMBER_SLOTS
-	p = 52983525027941 #  large prime after 3^256
-	
-	b = name.encode()
-	i = int.from_bytes(b, byteorder='little', signed=False)
-	
-	h = (i % p) % numberSlots
-	#print("hash2: %s > %i - %i" % (name, i, h))
-	return h
-
-def hash1(name):
-	# block shifting hash
-	b = name.encode()
-	# pad to 8 bytes
-	b= b + '\0'.encode() * (32 - len(b))
-	res = '\0'.encode()
-	res = res[0] & b[0]
-	res = res ^ b[1]
-	res = res ^ b[2]
-	res = res ^ b[3]
-	return res
-
-"""
-###############################################################################
-###############################################################################
-###############################################################################

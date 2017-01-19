@@ -110,7 +110,7 @@ class SwiftBackend(object):
 		t = self.swiftC.head_container(containerName)
 		r = (
 			t.get("x-container-meta-sdos", False) == "True",
-			t.get("x-container-meta-sdospartitionbits", 0),
-			t.get("x-container-meta-sdosheight", 0)
+			int(t.get("x-container-meta-sdospartitionbits", 0)),
+			int(t.get("x-container-meta-sdosheight", 0))
 		)
 		return r
