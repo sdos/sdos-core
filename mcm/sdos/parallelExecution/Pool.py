@@ -20,6 +20,7 @@ from mcm.sdos.core import Frontend
 from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
 from sdos.core.CascadeProperties import CascadeProperties
+from sdos.core.MasterKeySource import MasterKeyStatic
 
 
 class SwiftPool(Borg):
@@ -85,7 +86,7 @@ class FEPool(Borg):
 			sb = sp.getConn(swiftTenant, swiftToken)
 			props = sb.get_sdos_properties(container)
 			h = props[2] - 1 # tree height is without root internally, but with root externally
-			cascadeProperties = CascadeProperties(partition_bits=props[1], tree_height=h)
+			cascadeProperties = CascadeProperties(container_name=container, partition_bits=props[1], tree_height=h)
 			fe = Frontend.SdosFrontend(container, swiftBackend=sb, cascadeProperties=cascadeProperties, useCache=True)
 			self.addFE(container, swiftTenant, swiftToken, fe)
 			return fe
@@ -97,3 +98,30 @@ class FEPool(Borg):
 			self.c = 0
 
 		print(self.c)
+
+
+
+class KeySourcePool(Borg):
+	"""
+		A singleton that manages a pool of Key Sources.
+		only one instance of this class exists at any time -> only one Key source per container
+	"""
+
+	def __init__(self):
+		Borg.__init__(self)
+
+		try:
+			self.__pool
+		except:
+			self.__pool = dict()
+
+	def addSource(self, containerName, source):
+		self.__pool[containerName] = source
+
+	def getSource(self, cascadeProperties, swiftBackend):
+		try:
+			return self.__pool[cascadeProperties.container_name]
+		except:
+			ks = MasterKeyStatic(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
+			self.addSource(cascadeProperties.container_name, ks)
+			return ks

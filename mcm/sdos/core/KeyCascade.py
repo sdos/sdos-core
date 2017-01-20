@@ -25,11 +25,13 @@ class Cascade(object):
     Key Cascade main object. One instance of this should exist for each key-cascade (for each container)
     """
 
-    def __init__(self, partitionStore, keySlotMapper, cascadeProperties):
+    def __init__(self, partitionStore, keySlotMapper, masterKeySource, cascadeProperties):
         self.log = logging.getLogger(__name__)
         self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
+        self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
+        self.masterKeySource.unlock()
         self.log.info(
             "Initializing new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
@@ -93,10 +95,12 @@ class Cascade(object):
     # Master Key
     ###############################################################################
     def __getCurrentMasterKey(self):
-        return CryptoLib.digestKeyString('MASTERKEY')
+        #return CryptoLib.digestKeyString('MASTERKEY')
+        return self.masterKeySource.get_current_key()
 
     def __getNewAndReplaceOldMasterKey(self):
-        return CryptoLib.digestKeyString('MASTERKEY')
+        #return CryptoLib.digestKeyString('MASTERKEY')
+        return self.masterKeySource.get_new_key_and_replace_current()
 
     ###############################################################################
     # Partition load / store
@@ -175,8 +179,8 @@ class Cascade(object):
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
         elif key and createIfNotExists:
-            # if the partition did exist and also had the key, we need to manually release the a-priori lock
-            # in all other cases, the partition was saved above which unlocks implicitly
+            # If the partition did exist and also had the key, we need to manually release the a-priori lock.
+            # In all other cases, the partition was saved above which unlocks implicitly
             self.partitionStore.unlockPartition(partitionId)
         self.log.debug(
             '_getKeyFromCascade for slot: {}, in partition: {}, is localSlot: {}'.format(slot, partitionId, localSlot))

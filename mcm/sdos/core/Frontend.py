@@ -27,7 +27,10 @@ from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.crypto import CryptoLib
 from mcm.sdos.core.KeyCascade import Cascade
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
+from sdos.core import MasterKeySource
 from sdos.core.KeyPartitionCache import KeyPartitionCache
+from sdos.core.MasterKeySource import MasterKeyStatic
+from sdos.parallelExecution.Pool import KeySourcePool
 
 
 class DirectFrontend(object):
@@ -103,27 +106,31 @@ class SdosFrontend(object):
         """
         Constructor
         """
-        logging.warning("initializing a new SDOS frontend: containerName={} useCache={}". format(containerName, useCache))
+        logging.warning(
+            "initializing a new SDOS frontend: containerName={} useCache={}".format(containerName, useCache))
         self.containerName = containerName
         self.si = swiftBackend
         self.cascadeProperties = cascadeProperties
 
-        containerNameSdosMgmt = '_mcm-internal_SDOS-partitions_{}'.format(containerName)
-
         # mappingStore = MappingPersistence.LocalFileMappingStore()
-        mappingStore = MappingPersistence.SwiftMappingStore(containerNameSdosMgmt=containerNameSdosMgmt,
-                                                            swiftBackend=self.si)
+        mappingStore = MappingPersistence.SwiftMappingStore(
+            containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
+            swiftBackend=self.si)
         keySlotMapper = Mapping.KeySlotMapper(mappingStore=mappingStore, cascadeProperties=self.cascadeProperties)
 
         # partitionStore = CascadePersistence.LocalFilePartitionStore()
-        partitionStore = CascadePersistence.SwiftPartitionStore(containerNameSdosMgmt=containerNameSdosMgmt,
-                                                                swiftBackend=self.si)
+        partitionStore = CascadePersistence.SwiftPartitionStore(
+            containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
+            swiftBackend=self.si)
+        ksp = KeySourcePool()
+        keySource = ksp.getSource(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
+
         if useCache:
             p = KeyPartitionCache(partitionStore=partitionStore)
         else:
             p = partitionStore
 
-        self.cascade = Cascade(partitionStore=p, keySlotMapper=keySlotMapper,
+        self.cascade = Cascade(partitionStore=p, keySlotMapper=keySlotMapper, masterKeySource=keySource,
                                cascadeProperties=self.cascadeProperties)
 
     def finish(self):
