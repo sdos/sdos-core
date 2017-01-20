@@ -52,7 +52,7 @@ class KeySlotMapper(object):
     def __watch_and_store_mapping(self):
         self.log.debug("checking mapping consistency...")
         if not self.is_mapping_clean:
-            self.log.info("local mapping changed; writing to store")
+            self.log.info("local mapping changed; flushing to store")
             self.storeMapping()
             self.is_mapping_clean = True
         threading.Timer(10, self.__watch_and_store_mapping).start()
@@ -128,7 +128,7 @@ class KeySlotMapper(object):
         by.close()
 
     def storeMapping(self):
-        self.log.info("storing mapping")
+        self.log.info("flushing modified mapping from cache. Size: {}".format(len(self.mapping)))
         self.mappingStore.writeMapping(self.serializeToBytesIO())
 
     def readMapping(self):

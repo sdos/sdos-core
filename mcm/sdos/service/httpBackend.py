@@ -45,9 +45,9 @@ def doAuthGetToken(reqHead, method, data=None):
 def doGenericRequest(method, reqUrl, reqHead, reqArgs, reqData):
 	reqHead = stripHeaders(headers=reqHead)
 	r = requests.request(method=method, url=reqUrl, headers=reqHead, params=reqArgs, data=reqData)
-	log.debug("doGeneric {}, url: {}, head: {}, args: {}, data: {}".format(method, reqUrl, reqHead, reqArgs, reqData))
+	#log.debug("doGeneric {}, url: {}, head: {}, args: {}, data: {}".format(method, reqUrl, reqHead, reqArgs, reqData))
 	b = r.content
 	h = dict(r.headers)
 	s = r.status_code
-	log.debug("doGeneric {} swift response: {}, {}, {}".format(method, s, h, b))
+	#log.debug("doGeneric {} swift response: {}, {}, {}".format(method, s, h, b))
 	return (s, h, b)

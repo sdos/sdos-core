@@ -15,7 +15,7 @@
 import logging, coloredlogs
 from mcm.sdos import configuration
 
-log_format = '%(asctime)s %(module)s %(name)s[%(process)d] %(levelname)s %(message)s'
+log_format = '%(asctime)s %(module)s %(name)s[%(process)d][%(thread)d] %(levelname)s %(message)s'
 field_styles = {'module': {'color': 'magenta'}, 'hostname': {'color': 'magenta'}, 'programname': {'color': 'cyan'},
                 'name': {'color': 'blue'}, 'levelname': {'color': 'black', 'bold': True}, 'asctime': {'color': 'green'}}
 

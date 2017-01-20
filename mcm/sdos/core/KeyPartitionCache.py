@@ -15,7 +15,7 @@
 import io
 import logging
 import threading
-
+from threading import Lock
 
 
 class KeyPartitionCache(object):
@@ -31,16 +31,31 @@ class KeyPartitionCache(object):
         self.partitionStore = partitionStore
         self.partitionCache = dict()
         self.__dirty_partitions = set()
+        self.__locks = dict()
         self.__watch_and_store_partitions()
 
     def writePartition(self, partitionId, by):
+        """
+
+        :param partitionId:
+        :param by:
+        :return:
+        """
         logging.debug("writing partition to cache: {}".format(partitionId))
         self.partitionCache[partitionId] = by.getbuffer()
         self.__dirty_partitions.add(partitionId)
+        self.unlockPartition(partitionId)
 
+    def readPartition(self, partitionId, lockForWriting=False):
+        """
 
-    def readPartition(self, partitionId):
+        :param partitionId:
+        :param lockForWriting:
+        :return:
+        """
         logging.debug("reading partition from cache: {}".format(partitionId))
+        if lockForWriting:
+            self.lockPartition(partitionId)
 
         if partitionId in self.partitionCache:
             logging.debug("partition found in cache: {}".format(partitionId))
@@ -52,8 +67,11 @@ class KeyPartitionCache(object):
             self.partitionCache[partitionId] = by.getbuffer()
         return io.BytesIO(self.partitionCache[partitionId])
 
-
     def __watch_and_store_partitions(self):
+        """
+        Flush all the dirty partitions to the backend store. This methods gets called periodically on a timer
+        :return:
+        """
         logging.debug("checking for dirty partitions in cache: {} found".format(len(self.__dirty_partitions)))
         while self.__dirty_partitions:
             pid = self.__dirty_partitions.pop()
@@ -62,7 +80,30 @@ class KeyPartitionCache(object):
                 self.partitionStore.writePartition(pid, io.BytesIO(self.partitionCache[pid]))
             except Exception:
                 self.__dirty_partitions.add(pid)
-                logging.exception("storing changed partition failed!")
+                logging.exception(
+                    "storing changed partition {} failed! {} dirty partitions left to store. Leaving this execution.".format(
+                        pid, len(self.__dirty_partitions)))
+                break
         threading.Timer(10, self.__watch_and_store_partitions).start()
 
+    def lockPartition(self, partitionId):
+        """
 
+        :param partitionId:
+        :return:
+        """
+        logging.info("locking partition {}".format(partitionId))
+        if not partitionId in self.__locks:
+            logging.info("...lock object not yet present; creating for partition {}".format(partitionId))
+            self.__locks[partitionId] = Lock()
+        self.__locks[partitionId].acquire(blocking=True)
+
+    def unlockPartition(self, partitionId):
+        """
+
+        :param partitionId:
+        :return:
+        """
+        logging.info("releasing lock on partition {}".format(partitionId))
+        if partitionId in self.__locks:
+            self.__locks[partitionId].release()

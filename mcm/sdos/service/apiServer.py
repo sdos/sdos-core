@@ -47,8 +47,7 @@ def log_requests(f):
                                                                                 request.url,
                                                                                 request.headers,
                                                                                 request.args))
-        log.debug(
-            "Request DATA: {}".format(request.data))
+        #log.debug("Request DATA: {}".format(request.data))
         return f(*args, **kwargs)
 
     return logging_wrapper

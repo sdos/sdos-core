@@ -14,8 +14,6 @@
 
 import logging
 import math
-
-from sdos.core.KeyPartitionCache import KeyPartitionCache
 from sdos.crypto import CryptoLib
 from sdos.crypto.PartitionCrypt import PartitionCrypt
 from sdos import configuration
@@ -29,7 +27,7 @@ class Cascade(object):
 
     def __init__(self, partitionStore, keySlotMapper, cascadeProperties):
         self.log = logging.getLogger(__name__)
-        self.partitionStore = KeyPartitionCache(partitionStore=partitionStore)#partitionStore
+        self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
         self.cascadeProperties = cascadeProperties
         self.log.info(
@@ -97,20 +95,25 @@ class Cascade(object):
     def __getCurrentMasterKey(self):
         return CryptoLib.digestKeyString('MASTERKEY')
 
+    def __getNewAndReplaceOldMasterKey(self):
+        return CryptoLib.digestKeyString('MASTERKEY')
+
     ###############################################################################
     # Partition load / store
     ###############################################################################
-    def getPartition(self, partitionId, key):
+    def getPartition(self, partitionId, key, lockForWriting=False):
         try:
-            return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=False)
+            return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=False,
+                                                 lockForWriting=lockForWriting)
         except SystemError:
             return None
 
-    def generatePartition(self, partitionId, key):
-        return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=True)
+    def generatePartition(self, partitionId):
+        # return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=True, lockForWriting=True)
+        return KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
 
-    def __getOrGeneratePartition(self, partitionId, key, createIfNotExists=False):
-        by = self.partitionStore.readPartition(partitionId)
+    def __getOrGeneratePartition(self, partitionId, key, createIfNotExists=False, lockForWriting=False):
+        by = self.partitionStore.readPartition(partitionId, lockForWriting=lockForWriting)
         self.log.info('getting partition: {}, bytestream object is: {}, createIfNotExists={}'.format(partitionId, by,
                                                                                                      createIfNotExists))
         if not by and not createIfNotExists:
@@ -132,11 +135,11 @@ class Cascade(object):
         self.partitionStore.writePartition(partition.getId(), by)
 
     ###############################################################################
-    # Get new key, get existing key
+    # Insert new key, get existing key
     ###############################################################################
     def getKeyForNewObject(self, name):
         slot = self.keySlotMapper.getOrCreateMapping(name)
-        self.log.info('getting key for new object with name: {}'.format(name))
+        self.log.info('getting key for new object with name: {}, goes into slot: {}'.format(name, slot))
         return self._getKeyFromCascade(slot, createIfNotExists=True)
 
     def getKeyForStoredObject(self, name):
@@ -144,15 +147,22 @@ class Cascade(object):
         return self._getKeyFromCascade(slot, createIfNotExists=False)
 
     def _getKeyFromCascade(self, slot, createIfNotExists=False):
+        """
+        TODO: separate reading/writing cases
+        :param slot:
+        :param createIfNotExists:
+        :return:
+        """
         partitionId = self.__getPartitionIdForSlot(slot)
         if (0 == partitionId):
             partitionKey = self.__getCurrentMasterKey()
         else:
             partitionKey = self._getKeyFromCascade(partitionId, createIfNotExists)
 
-        partition = self.getPartition(partitionId, partitionKey)
+        # if create is allowed, we lock the partition a-priori. It could be that we add a new key...
+        partition = self.getPartition(partitionId, partitionKey, lockForWriting=createIfNotExists)
         if not partition and createIfNotExists:
-            partition = self.generatePartition(partitionId, partitionKey)
+            partition = self.generatePartition(partitionId)
         # the partition will be stored later since the key will be empty as well
         elif not partition and not createIfNotExists:
             raise SystemError('requested partition {} does not exist'.format(partitionId))
@@ -164,7 +174,10 @@ class Cascade(object):
             self.__storePartition(partition, partitionKey)
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
-
+        elif key and createIfNotExists:
+            # if the partition did exist and also had the key, we need to manually release the a-priori lock
+            # in all other cases, the partition was saved above which unlocks implicitly
+            self.partitionStore.unlockPartition(partitionId)
         self.log.debug(
             '_getKeyFromCascade for slot: {}, in partition: {}, is localSlot: {}'.format(slot, partitionId, localSlot))
         return key
@@ -184,7 +197,7 @@ class Cascade(object):
 
         partitionId = self.__getPartitionIdForSlot(slot)
         partitionKey = self._getKeyFromCascade(partitionId)
-        partition = self.getPartition(partitionId, partitionKey)
+        partition = self.getPartition(partitionId, partitionKey, lockForWriting=True)
 
         partition.resetKey(self.__globalSlotToLocalSlot(slot))
         self.__storePartition(partition, partitionKey)
@@ -221,7 +234,7 @@ class Cascade(object):
         :return:
         """
         # first we lod and decrypt the current partition
-        thisPartition = self.getPartition(partitionId, partitionKeyOld)
+        thisPartition = self.getPartition(partitionId, partitionKeyOld, lockForWriting=True)
         slotsToModify = self.__get_list_of_slots_to_branches(objectKeySlots, partitionId)
         self.log.info("cascaded re-keying on partition {}, targeting object Key IDs {}. following paths to: {}".format(
             partitionId, objectKeySlots, slotsToModify))
@@ -276,6 +289,8 @@ class Cascade(object):
         l.sort()
         return l
 
+
+'''
     ###############################################################################
     # SECURE DELETE BOTTOM-UP (legacy)
     def __secure_delete_bottom_up(self, name):
@@ -316,3 +331,4 @@ class Cascade(object):
             pass
         else:
             self._secureReplaceKey(partitionId, newPartitionKey)
+'''

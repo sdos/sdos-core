@@ -21,11 +21,13 @@
 """
 
 import io
+import logging
 from mcm.sdos.swift import SwiftBackend
 from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.crypto import CryptoLib
 from mcm.sdos.core.KeyCascade import Cascade
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
+from sdos.core.KeyPartitionCache import KeyPartitionCache
 
 
 class DirectFrontend(object):
@@ -97,10 +99,11 @@ class SdosFrontend(object):
     This frontend implements the SDOS functionality
     """
 
-    def __init__(self, containerName, swiftBackend, cascadeProperties):
+    def __init__(self, containerName, swiftBackend, cascadeProperties, useCache=False):
         """
         Constructor
         """
+        logging.warning("initializing a new SDOS frontend: containerName={} useCache={}". format(containerName, useCache))
         self.containerName = containerName
         self.si = swiftBackend
         self.cascadeProperties = cascadeProperties
@@ -115,7 +118,12 @@ class SdosFrontend(object):
         # partitionStore = CascadePersistence.LocalFilePartitionStore()
         partitionStore = CascadePersistence.SwiftPartitionStore(containerNameSdosMgmt=containerNameSdosMgmt,
                                                                 swiftBackend=self.si)
-        self.cascade = Cascade(partitionStore=partitionStore, keySlotMapper=keySlotMapper,
+        if useCache:
+            p = KeyPartitionCache(partitionStore=partitionStore)
+        else:
+            p = partitionStore
+
+        self.cascade = Cascade(partitionStore=p, keySlotMapper=keySlotMapper,
                                cascadeProperties=self.cascadeProperties)
 
     def finish(self):
