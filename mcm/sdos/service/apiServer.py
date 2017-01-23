@@ -162,8 +162,7 @@ def get_sdos_frontend(containerName, swiftTenant, swiftToken):
 ##############################################################################
 @app.errorhandler(Exception)
 def handle_invalid_usage(e):
-    log.error(e.__str__())
-    log.error(type(e))
+    log.exception("unhandled exception reached API handler")
     if (ClientException == type(e)):
         if (401 == e.http_status):
             return "not authenticated", 401

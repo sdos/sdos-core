@@ -92,11 +92,12 @@ class KeyPartitionCache(object):
         :param partitionId:
         :return:
         """
-        logging.info("locking partition {}".format(partitionId))
+        logging.info("... \/ acquiring LOCK for partition {}".format(partitionId))
         if not partitionId in self.__locks:
             logging.info("...lock object not yet present; creating for partition {}".format(partitionId))
             self.__locks[partitionId] = Lock()
         self.__locks[partitionId].acquire(blocking=True)
+        logging.info("... /\ got LOCK for partition {}".format(partitionId))
 
     def unlockPartition(self, partitionId):
         """

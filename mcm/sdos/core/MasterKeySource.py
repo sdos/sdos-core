@@ -24,7 +24,8 @@ class MasterKeyStatic(object):
     a static, hard-coded master key for testing/development
     """
 
-    STATIC_KEY = CryptoLib.digestKeyString('WRAPPING_KEY')
+    STATIC_KEY = CryptoLib.digestKeyString('ANYTHING')
+    my_key_type="static testing key"
 
     def __init__(self, cascadeProperties, swiftBackend):
         """
@@ -36,6 +37,12 @@ class MasterKeyStatic(object):
         self.outerHeader = 'SDOS_MKEY_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
         self.keyObjName = 'masterkey.sdos'
         self.plainMasterKey = None
+
+    def get_status_json(self):
+        return {
+            'type': self.my_key_type,
+            'is_unlocked': self.is_key_unlocked()
+        }
 
     def __load_wrapped_key(self):
         logging.info("loading the wrapped master key from {}".format(self.containerNameSdosMgmt))

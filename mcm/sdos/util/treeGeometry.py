@@ -43,7 +43,9 @@ def get_cascade_stats_json(cascade):
                            round(100 / cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m),
                                  2)) + "%",
                        "levels": cascade.cascadeProperties.TREE_HEIGHT + 1,
-                       "partitionSize": cascade.cascadeProperties.PARTITION_SIZE
+                       "partitionSize": cascade.cascadeProperties.PARTITION_SIZE,
+                       "numPartitions": cascade.cascadeProperties.TOTAL_NUMER_OF_PARTITIONS,
+                       "masterKeySource": cascade.masterKeySource.get_status_json()
                        })
 
 
