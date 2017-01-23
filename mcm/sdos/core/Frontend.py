@@ -122,6 +122,8 @@ class SdosFrontend(object):
         partitionStore = CascadePersistence.SwiftPartitionStore(
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
             swiftBackend=self.si)
+
+
         ksp = KeySourcePool()
         keySource = ksp.getSource(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
 

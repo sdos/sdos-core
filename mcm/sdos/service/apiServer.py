@@ -47,7 +47,7 @@ def log_requests(f):
                                                                                 request.url,
                                                                                 request.headers,
                                                                                 request.args))
-        #log.debug("Request DATA: {}".format(request.data))
+        # log.debug("Request DATA: {}".format(request.data))
         return f(*args, **kwargs)
 
     return logging_wrapper
@@ -269,7 +269,7 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
-        return pseudoObjects.dispatch(sdos_frontend, thisObject)
+        return pseudoObjects.dispatch_get_head(sdos_frontend, thisObject)
 
     myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
     s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
@@ -305,6 +305,10 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 def handle_object_put(thisAuth, thisContainer, thisObject):
     myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+
+    if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
+        return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.data)
+
     if (sdos_frontend and len(request.data)):
         data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
         headers = add_sdos_flag(request.headers)

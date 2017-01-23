@@ -19,6 +19,18 @@ import logging
 import io
 
 
+def getSha256(d):
+	h = hashlib.sha256()
+	h.update(d)
+	return h.hexdigest()
+
+def getKeyAsId(k):
+	try:
+		s = getSha256(k)
+		return s[:10]
+	except:
+		return ""
+
 def generateRandomKey():
 	r = Random.new()
 	return hashlib.sha256(r.read(64)).digest()

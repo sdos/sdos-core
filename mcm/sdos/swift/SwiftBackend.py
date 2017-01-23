@@ -111,6 +111,7 @@ class SwiftBackend(object):
 		r = (
 			t.get("x-container-meta-sdos", False) == "True",
 			int(t.get("x-container-meta-sdospartitionbits", 0)),
-			int(t.get("x-container-meta-sdosheight", 0))
+			int(t.get("x-container-meta-sdosheight", 0)),
+			t.get("x-container-meta-sdosmasterkey", 0)
 		)
 		return r

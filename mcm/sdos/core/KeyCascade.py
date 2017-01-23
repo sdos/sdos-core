@@ -31,7 +31,6 @@ class Cascade(object):
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
-        self.masterKeySource.unlock()
         self.log.info(
             "Initializing new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))

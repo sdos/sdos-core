@@ -37,13 +37,14 @@ class MasterKeyStatic(object):
         self.outerHeader = 'SDOS_MKEY_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
         self.keyObjName = 'masterkey.sdos'
         self.plainMasterKey = None
+        try:
+            self.unlock_key()
+        except:
+            logging.error("unlocking master key failed! Key source is not ready...")
 
-    def get_status_json(self):
-        return {
-            'type': self.my_key_type,
-            'is_unlocked': self.is_key_unlocked()
-        }
-
+    ###############################################################################
+    # master key load/store
+    ###############################################################################
     def __load_wrapped_key(self):
         logging.info("loading the wrapped master key from {}".format(self.containerNameSdosMgmt))
         try:
@@ -66,28 +67,9 @@ class MasterKeyStatic(object):
         self.swiftBackend.putObject(container=self.containerNameSdosMgmt, name=self.keyObjName, dataObject=obj)
         logging.debug('wrote master key to swift mgmt container {}'.format(self.containerNameSdosMgmt))
 
-
-    def is_key_unlocked(self):
-        return bool(self.plainMasterKey)
-
-    def is_provider_ready(self):
-        return True
-
-    def lock(self):
-        self.plainMasterKey = None
-
-    def unlock(self):
-        logging.info("unlocking the master key from {}".format(self.containerNameSdosMgmt))
-        by = self.__load_wrapped_key()
-        if not by:
-            logging.error("no wrapped key found in {}. Assuming first run, creating default key".format(self.containerNameSdosMgmt))
-            self.get_new_key_and_replace_current()
-            return
-        dc = DataCrypt(self.STATIC_KEY)
-        plain = dc.decryptBytesIO(by)
-        self.plainMasterKey = plain.read()
-
-
+    ###############################################################################
+    # API for SDOS
+    ###############################################################################
     def get_current_key(self):
         return self.plainMasterKey
 
@@ -99,8 +81,43 @@ class MasterKeyStatic(object):
         self.__store_wrapped_key(wrapped_key=wrapped_key)
         return self.plainMasterKey
 
-    def is_new_key_available(self):
-        pass
+    ###############################################################################
+    # API for Swift/Bluebox
+    ###############################################################################
+    def get_status_json(self):
+        return {
+            'type': self.my_key_type,
+            'is_unlocked': self.is_key_unlocked(),
+            'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
+            'is_next_wrapper_ready': self.is_next_wrapper_ready()
+        }
 
-    def set_new_key(self):
-        pass
+    def is_key_unlocked(self):
+        return bool(self.plainMasterKey)
+
+    def is_next_wrapper_ready(self):
+        return True
+
+    def provide_next_wrapper(self, passphrase):
+        return True
+
+    def lock_key(self):
+        self.plainMasterKey = None
+
+    def unlock_key(self, passphrase = None):
+        logging.info("unlocking the master key from {}".format(self.containerNameSdosMgmt))
+        by = self.__load_wrapped_key()
+        if not by:
+            logging.error("no wrapped key found in {}. Assuming first run, creating default key".format(
+                self.containerNameSdosMgmt))
+            self.get_new_key_and_replace_current()
+            return
+        dc = DataCrypt(self.STATIC_KEY)
+        plain = dc.decryptBytesIO(by)
+        self.plainMasterKey = plain.read()
+
+
+
+    ###############################################################################
+    # Helpers
+    ###############################################################################
