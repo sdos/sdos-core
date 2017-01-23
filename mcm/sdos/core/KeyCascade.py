@@ -99,7 +99,8 @@ class Cascade(object):
 
     def __getNewAndReplaceOldMasterKey(self):
         #return CryptoLib.digestKeyString('MASTERKEY')
-        return self.masterKeySource.get_new_key_and_replace_current()
+        m = self.masterKeySource.get_new_key_and_replace_current()
+        return m
 
     ###############################################################################
     # Partition load / store
@@ -219,7 +220,7 @@ class Cascade(object):
         slot = self.keySlotMapper.resetMapping(name)
         self.log.warning('SECURE DELETE top down: deleting object key for object: {} in slot: {}'.format(name, slot))
         oldMasterKey = self.__getCurrentMasterKey()
-        newMasterKey = self.__getCurrentMasterKey()
+        newMasterKey = self.__getNewAndReplaceOldMasterKey()
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
@@ -254,6 +255,7 @@ class Cascade(object):
                         partitionId, s))
                 ok = thisPartition.getKey(localSlot)
                 nk = CryptoLib.generateRandomKey()
+                thisPartition.setKey(localSlot, nk)
                 self.__cascaded_rekey_top_down(ok, nk, s, objectKeySlots)
         self.__storePartition(thisPartition, partitionKeyNew)
 
