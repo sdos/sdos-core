@@ -17,11 +17,6 @@ import logging
 import collections
 import math
 
-from mcm.sdos import configuration
-
-log = logging.getLogger()
-
-
 ###############################################################################
 ###############################################################################
 
@@ -124,14 +119,19 @@ def get_slot_utilization(cascade, NUMFIELDS=10000):
     s = ""
     MAXVAL = 9
     groupSize = math.floor((
-                           cascade.cascadeProperties.LAST_OBJCT_KEY_SLOT - cascade.cascadeProperties.FIRST_OBJECT_KEY_SLOT + 1) / NUMFIELDS)
+                               cascade.cascadeProperties.LAST_OBJCT_KEY_SLOT - cascade.cascadeProperties.FIRST_OBJECT_KEY_SLOT + 1) / NUMFIELDS)
     remainder = (
-                cascade.cascadeProperties.LAST_OBJCT_KEY_SLOT - cascade.cascadeProperties.FIRST_OBJECT_KEY_SLOT + 1) - groupSize * NUMFIELDS
+                    cascade.cascadeProperties.LAST_OBJCT_KEY_SLOT - cascade.cascadeProperties.FIRST_OBJECT_KEY_SLOT + 1) - groupSize * NUMFIELDS
     currentPos = 0
     foundInGroup = 0
+    if groupSize == 0:
+        e = "Error: block size must be smaller than number of keys, i.e. smaller than {}".format(cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS)
+        logging.info(e)
+        return json.dumps({"groupSize": 0, "blocks": NUMFIELDS, "alloc": e})
+
     for slot in range(cascade.cascadeProperties.FIRST_OBJECT_KEY_SLOT, cascade.cascadeProperties.LAST_OBJCT_KEY_SLOT):
         if currentPos == groupSize:
-            s += str(math.ceil(MAXVAL / groupSize * foundInGroup))
+            s += str(math.ceil((MAXVAL / groupSize) * foundInGroup))
             currentPos = 0
             foundInGroup = 0
         if slot in reverse:
