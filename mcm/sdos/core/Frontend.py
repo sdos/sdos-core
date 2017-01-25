@@ -29,8 +29,6 @@ from mcm.sdos.core.KeyCascade import Cascade
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
 from sdos.core import MasterKeySource
 from sdos.core.KeyPartitionCache import KeyPartitionCache
-from sdos.core.MasterKeySource import MasterKeyStatic
-from sdos.parallelExecution.Pool import KeySourcePool
 
 
 class DirectFrontend(object):
@@ -123,9 +121,8 @@ class SdosFrontend(object):
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
             swiftBackend=self.si)
 
-
-        ksp = KeySourcePool()
-        keySource = ksp.getSource(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
+        keySource = MasterKeySource.masterKeySourceFactory(cascadeProperties=cascadeProperties,
+                                                           swiftBackend=swiftBackend)
 
         if useCache:
             p = KeyPartitionCache(partitionStore=partitionStore)

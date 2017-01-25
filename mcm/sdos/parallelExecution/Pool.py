@@ -116,7 +116,7 @@ class FEPool(Borg):
 
         print(self.c)
 
-
+'''
 class KeySourcePool(Borg):
     """
         A singleton that manages a pool of Key Sources.
@@ -141,3 +141,4 @@ class KeySourcePool(Borg):
             ks = MasterKeyStatic(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
             self.addSource(cascadeProperties.container_name, ks)
             return ks
+'''

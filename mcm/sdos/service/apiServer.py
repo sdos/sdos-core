@@ -169,7 +169,7 @@ def handle_invalid_usage(e):
         return e.__str__(), e.http_status
     if (HttpError == type(e)):
         return e.to_string(), e.status_code
-    return "Internal Server Error", 500
+    return "{}".format(e), 500
 
 
 @app.route("/auth/v1.0", methods=["GET"])

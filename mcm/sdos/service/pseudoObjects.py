@@ -72,9 +72,9 @@ def dispatch_get_head(sdos_frontend, thisObject):
         ###############################################################################
         else:
             raise HttpError("unknown pseudo object: {}".format(thisObject))
-    except Exception:
+    except Exception as e:
         logging.exception("pseudo object API received exception")
-        return "check logs", 500
+        return "{}".format(e), 500
 
 
 def dispatch_put_post(sdos_frontend, thisObject, data):
@@ -99,6 +99,6 @@ def dispatch_put_post(sdos_frontend, thisObject, data):
         ###############################################################################
         else:
             raise HttpError("unknown pseudo object: {}".format(thisObject))
-    except Exception:
+    except Exception as e:
         logging.exception("pseudo object API received exception")
-        return "check logs", 500
+        return "{}".format(e), 500
