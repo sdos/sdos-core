@@ -16,6 +16,7 @@
 
 """
 import logging
+from threading import Lock
 from mcm.sdos.core import Frontend
 from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
@@ -65,6 +66,7 @@ class FEPool(Borg):
 
     def __init__(self):
         Borg.__init__(self)
+        self.__lock = Lock()
 
         try:
             self.__pool
@@ -81,9 +83,19 @@ class FEPool(Borg):
         logging.info(
             "looking for Frontend for: container {}, swiftTenant {}, swiftToken {}".format(container, swiftTenant,
                                                                                            swiftToken))
+        logging.debug("Lock \/ acquiring")
+        self.__lock.acquire()
+        logging.debug("Lock || locked")
         try:
-            return self.__pool[(container, swiftTenant)]
+            p = self.__pool[(container, swiftTenant)]
+            self.__lock.release()
+            logging.debug("Lock /\ release found FE")
+            return p
         except:
+            logging.info(
+                "Frontend not found in pool, creating new for: container {}, swiftTenant {}, swiftToken {}".format(
+                    container, swiftTenant,
+                    swiftToken))
             sp = SwiftPool()
             sb = sp.getConn(swiftTenant, swiftToken)
             props = sb.get_sdos_properties(container)
@@ -92,6 +104,8 @@ class FEPool(Borg):
                                                   master_key_type=props[3])
             fe = Frontend.SdosFrontend(container, swiftBackend=sb, cascadeProperties=cascadeProperties, useCache=True)
             self.addFE(container, swiftTenant, swiftToken, fe)
+            self.__lock.release()
+            logging.debug("Lock /\ release CREATED  NEW FE")
             return fe
 
     def count(self):

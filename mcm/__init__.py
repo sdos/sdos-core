@@ -21,6 +21,7 @@ field_styles = {'module': {'color': 'magenta'}, 'hostname': {'color': 'magenta'}
 
 coloredlogs.install(level=configuration.log_level, fmt=log_format, field_styles=field_styles)
 
+logging.getLogger("werkzeug").setLevel(level=logging.WARNING)
 
 """
 logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
