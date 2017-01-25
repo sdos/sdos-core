@@ -24,10 +24,23 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.util import treeGeometry
 
 PSEUDO_OBJECT_PREFIX = "__mcm__/"
+PASSPHRASEFIELD = 'x-object-meta-passphrase'
+
+
+def extract_passphrase(msg):
+    """
+
+    :param msg:
+    :return:
+    """
+    try:
+        return msg[PASSPHRASEFIELD]
+    except:
+        return None
 
 
 def dispatch_get_head(sdos_frontend, thisObject):
-    logging.debug("GTE/HEAD request for MCM pseudo object: {}".format(thisObject))
+    logging.debug("GET/HEAD request for MCM pseudo object: {}".format(thisObject))
     try:
         cascade = sdos_frontend.cascade
         ###############################################################################
@@ -65,16 +78,20 @@ def dispatch_get_head(sdos_frontend, thisObject):
 
 
 def dispatch_put_post(sdos_frontend, thisObject, data):
-    logging.debug("PUT/POST request for MCM pseudo object: {}".format(thisObject))
+    logging.debug("PUT/POST request for MCM pseudo object: {}, data: {}".format(thisObject, data))
     try:
         cascade = sdos_frontend.cascade
+        p = extract_passphrase(data)
         ###############################################################################
         # key management actions
         ###############################################################################
-        if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_unlock":
-            return Response(response=cascade.masterKeySource.unlock_key(), status=200,
+        if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_next_deletable":
+            return Response(response=cascade.masterKeySource.provide_next_deletable(passphrase=p), status=200,
                             mimetype="application/json")
-        if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_lock":
+        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_unlock":
+            return Response(response=cascade.masterKeySource.unlock_key(passphrase=p), status=200,
+                            mimetype="application/json")
+        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_lock":
             return Response(response=cascade.masterKeySource.lock_key(), status=200,
                             mimetype="application/json")
         ###############################################################################

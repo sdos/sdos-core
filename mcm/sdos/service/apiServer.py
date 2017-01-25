@@ -307,7 +307,7 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
-        return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.data)
+        return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.headers)
 
     if (sdos_frontend and len(request.data)):
         data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)

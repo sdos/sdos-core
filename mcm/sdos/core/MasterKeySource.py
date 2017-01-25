@@ -25,7 +25,7 @@ class MasterKeyStatic(object):
     """
 
     STATIC_KEY = CryptoLib.digestKeyString('ANYTHING')
-    my_key_type="static testing key"
+    my_key_type="static"
 
     def __init__(self, cascadeProperties, swiftBackend):
         """
@@ -89,17 +89,19 @@ class MasterKeyStatic(object):
             'type': self.my_key_type,
             'is_unlocked': self.is_key_unlocked(),
             'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
-            'is_next_wrapper_ready': self.is_next_wrapper_ready()
+            'is_next_deletable_ready': self.is_next_deletable_ready()
         }
 
     def is_key_unlocked(self):
         return bool(self.plainMasterKey)
 
-    def is_next_wrapper_ready(self):
-        return True
+    def is_next_deletable_ready(self):
+        #return True
+        return False
 
-    def provide_next_wrapper(self, passphrase):
-        return True
+    def provide_next_deletable(self, passphrase):
+        print("kkkkkkkkkkkkkkkkkkkkkkkkkk")
+        print(passphrase)
 
     def lock_key(self):
         self.plainMasterKey = None
