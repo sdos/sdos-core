@@ -152,10 +152,10 @@ class MasterKeyPassphrase(object):
             raise KeyError("Master key is not available")
         return self.plainMasterKey
 
-    def get_new_key_and_replace_current(self):
+    def get_new_key_and_replace_current(self, first_run=False):
         if not self.next_deletable:
             raise KeyError("can't replace current master key without new wrapping (deletable) key")
-        if not self.plainMasterKey:
+        if not first_run and not self.plainMasterKey:
             raise KeyError("not allowed while current master is locked")
         new_master = CryptoLib.generateRandomKey()
         self.plainMasterKey = new_master
@@ -196,7 +196,7 @@ class MasterKeyPassphrase(object):
             logging.error("no wrapped key found in {}. Assuming first run, creating default key".format(
                 self.containerNameSdosMgmt))
             self.provide_next_deletable(passphrase)
-            self.get_new_key_and_replace_current()
+            self.get_new_key_and_replace_current(first_run=True)
             return
         try:
             dc = DataCrypt(CryptoLib.digestKeyString(passphrase))

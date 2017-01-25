@@ -188,12 +188,12 @@ class Cascade(object):
         return key
 
     ###############################################################################
-    # Delete: individual key
+    # Delete: individual object key
     ###############################################################################
     def deleteObjectKey(self, name):
         """
-        This function just deletes a single key anywhere in the cascade.
-        Not actually used in SDOS
+        This function just deletes a single object key without path re-keying
+        used to remove a falsely assigned/unused key
         :param name:
         :return:
         """
