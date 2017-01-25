@@ -28,6 +28,7 @@ class KeyPartitionCache(object):
         """
         Constructor
         """
+        logging.warning("Init new")
         self.partitionStore = partitionStore
         self.partitionCache = dict()
         self.__dirty_partitions = set()

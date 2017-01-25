@@ -26,13 +26,14 @@ class Cascade(object):
     """
 
     def __init__(self, partitionStore, keySlotMapper, masterKeySource, cascadeProperties):
+        logging.warning("Init new")
         self.log = logging.getLogger(__name__)
         self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
         self.log.info(
-            "Initializing new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
+            "Initialized new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
 
     ###############################################################################
