@@ -76,6 +76,8 @@ class MasterKeyStatic(object):
     # API for SDOS
     ###############################################################################
     def get_current_key(self):
+        if not self.plainMasterKey:
+            raise KeyError("Master key is not available")
         return self.plainMasterKey
 
     def get_new_key_and_replace_current(self):
@@ -97,6 +99,9 @@ class MasterKeyStatic(object):
             'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
             'is_next_deletable_ready': True
         }
+
+    def clear_next_deletable(self):
+        pass
 
     def provide_next_deletable(self, passphrase):
         pass
@@ -143,11 +148,15 @@ class MasterKeyPassphrase(object):
     # API for SDOS
     ###############################################################################
     def get_current_key(self):
+        if not self.plainMasterKey:
+            raise KeyError("Master key is not available")
         return self.plainMasterKey
 
     def get_new_key_and_replace_current(self):
         if not self.next_deletable:
             raise KeyError("can't replace current master key without new wrapping (deletable) key")
+        if not self.plainMasterKey:
+            raise KeyError("not allowed while current master is locked")
         new_master = CryptoLib.generateRandomKey()
         self.plainMasterKey = new_master
         dc = DataCrypt(self.next_deletable)
@@ -167,6 +176,9 @@ class MasterKeyPassphrase(object):
             'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
             'is_next_deletable_ready': bool(self.next_deletable)
         }
+
+    def clear_next_deletable(self):
+        self.next_deletable = None
 
     def provide_next_deletable(self, passphrase):
         nd = CryptoLib.digestKeyString(passphrase)
@@ -192,7 +204,6 @@ class MasterKeyPassphrase(object):
             self.plainMasterKey = plain.read()
         except:
             raise KeyError("wrong passphrase. Failed decrypting master key")
-
 
 
 ###############################################################################

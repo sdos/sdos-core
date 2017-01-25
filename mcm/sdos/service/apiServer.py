@@ -275,7 +275,10 @@ def handle_object_get(thisAuth, thisContainer, thisObject):
     s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
                                            reqArgs=request.args, reqData=request.data)
     if (s == 200 and len(b) and sdos_frontend):
-        decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
+        try:
+            decrypted_b = sdos_frontend.decrypt_bytes_object(b, thisObject)
+        except:
+            raise HttpError("Decryption failed", 412)
         # don't overwrite headers since the content length from the original response is incorrect; it accounts for padding...
         # the Response object will determine the actual, correct size
         return Response(response=decrypted_b, status=s, headers=strip_etag(h))
@@ -310,8 +313,11 @@ def handle_object_put(thisAuth, thisContainer, thisObject):
         return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.headers)
 
     if (sdos_frontend and len(request.data)):
-        data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
-        headers = add_sdos_flag(request.headers)
+        try:
+            data = sdos_frontend.encrypt_bytes_object(o=request.data, name=thisObject)
+            headers = add_sdos_flag(request.headers)
+        except:
+            raise HttpError("Encryption failed", 412)
     else:
         data = request.data
         headers = request.headers

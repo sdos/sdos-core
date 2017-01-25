@@ -211,8 +211,11 @@ class Cascade(object):
     # Delete: secure delete
     ###############################################################################
     def secureDeleteObjectKey(self, name):
-        # self.__secure_delete_bottom_up(name)
-        self.__secure_delete_top_down(name)
+        try:
+            # self.__secure_delete_bottom_up(name)
+            self.__secure_delete_top_down(name)
+        except Exception as e:
+            raise Exception("Secure delete failed. {}".format(e))
 
     ###############################################################################
     # SECURE DELETE TOP DOWN

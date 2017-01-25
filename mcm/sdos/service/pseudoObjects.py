@@ -41,30 +41,31 @@ def extract_passphrase(msg):
 
 def dispatch_get_head(sdos_frontend, thisObject):
     logging.debug("GET/HEAD request for MCM pseudo object: {}".format(thisObject))
+    is_operation = lambda name: (thisObject[len(PSEUDO_OBJECT_PREFIX):] == name)
     try:
         cascade = sdos_frontend.cascade
         ###############################################################################
         # statistics, visualization
         ###############################################################################
-        if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_used_partitions":
+        if is_operation("sdos_used_partitions"):
             return Response(response=treeGeometry.get_used_partitions_json(cascade=cascade), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_partition_mapping":
+        elif is_operation("sdos_partition_mapping"):
             return Response(response=treeGeometry.get_partition_mapping_json(cascade=cascade), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_cascade_stats":
+        elif is_operation("sdos_cascade_stats"):
             return Response(response=treeGeometry.get_cascade_stats_json(cascade=cascade), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10":
+        elif is_operation("sdos_slot_utilization10"):
             return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization100":
+        elif is_operation("sdos_slot_utilization100"):
             return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=100), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization1000":
+        elif is_operation("sdos_slot_utilization1000"):
             return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=1000), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_slot_utilization10000":
+        elif is_operation("sdos_slot_utilization10000"):
             return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10000), status=200,
                             mimetype="application/json")
         ###############################################################################
@@ -79,19 +80,23 @@ def dispatch_get_head(sdos_frontend, thisObject):
 
 def dispatch_put_post(sdos_frontend, thisObject, data):
     logging.debug("PUT/POST request for MCM pseudo object: {}, data: {}".format(thisObject, data))
+    is_operation = lambda name: (thisObject[len(PSEUDO_OBJECT_PREFIX):] == name)
     try:
         cascade = sdos_frontend.cascade
         p = extract_passphrase(data)
         ###############################################################################
         # key management actions
         ###############################################################################
-        if thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_next_deletable":
+        if is_operation("sdos_next_deletable"):
             return Response(response=cascade.masterKeySource.provide_next_deletable(passphrase=p), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_unlock":
+        elif is_operation("sdos_clear_next_deletable"):
+            return Response(response=cascade.masterKeySource.clear_next_deletable(), status=200,
+                            mimetype="application/json")
+        elif is_operation("sdos_masterkey_unlock"):
             return Response(response=cascade.masterKeySource.unlock_key(passphrase=p), status=200,
                             mimetype="application/json")
-        elif thisObject[len(PSEUDO_OBJECT_PREFIX):] == "sdos_masterkey_lock":
+        elif is_operation("sdos_masterkey_lock"):
             return Response(response=cascade.masterKeySource.lock_key(), status=200,
                             mimetype="application/json")
         ###############################################################################
