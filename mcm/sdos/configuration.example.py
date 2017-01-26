@@ -53,8 +53,8 @@ proxy_store_url = "http://localhost:3000/v1/AUTH_{}"
 
 
 # swift endpoint
-swift_auth_url = "http://192.168.209.204:8080/auth/v1.0"
-swift_store_url = "http://192.168.209.204:8080/v1/AUTH_{}"
+swift_auth_url = "http://129.69.209.131:5000/v2.0/tokens"
+swift_store_url = "http://129.69.209.131:8080/v1/AUTH_{}"
 
 
 ###############################################################################
