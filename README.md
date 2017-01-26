@@ -14,6 +14,26 @@ SDOS is implemented as an API proxy for the Swift object store from the OpenStac
 * [Metadata Extractor](https://github.com/timwaizenegger/mcm-metadataExtractor)
 * [Retention Manager](https://github.com/timwaizenegger/mcm-retentionManager)
 
+
+
+
+# Features
+- client and server support for Swift REST protocol
+- transparent proxy operation between any swift client/server
+- content encryption and secure deletion configurable per container
+- pseudo-object API allows SDOS related special requests within the Swift protocol
+- different cascade geometries per container
+- different master-key security per container
+    - master key wrapped by static testing key
+    - master key wrapped by user defined pass phrase
+    - master key wrapped by Trusted Platform Module (TPM)
+- multithreaded operation of key cascade
+- caching for nodes and object mapping
+- extensive logging/debugging
+
+
+
+
 ## How to use
 Always run the `setenv.sh` script first to set the pythonpath and virtual environment. 
 Then you can either manually run one of the test/experimental classes:
