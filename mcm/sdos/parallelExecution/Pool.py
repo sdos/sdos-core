@@ -17,11 +17,11 @@
 """
 import logging
 from threading import Lock
+
 from mcm.sdos.core import Frontend
 from mcm.sdos.parallelExecution import Borg
 from mcm.sdos.swift import SwiftBackend
 from sdos.core.CascadeProperties import CascadeProperties
-from sdos.core.MasterKeySource import MasterKeyStatic
 
 
 class SwiftPool(Borg):
@@ -44,18 +44,10 @@ class SwiftPool(Borg):
     def getConn(self, swiftTenant, swiftToken):
         try:
             return self.__pool[(swiftTenant, swiftToken)]
-        except:
+        except KeyError:
             sb = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken)
             self.addConn(swiftTenant, swiftToken, sb)
             return sb
-
-    def count(self):
-        try:
-            self.c += 1
-        except:
-            self.c = 0
-
-        print(self.c)
 
 
 class FEPool(Borg):
@@ -66,7 +58,11 @@ class FEPool(Borg):
 
     def __init__(self):
         Borg.__init__(self)
-        self.__lock = Lock()
+
+        try:
+            self.__lock
+        except:
+            self.__lock = Lock()
 
         try:
             self.__pool
@@ -91,7 +87,7 @@ class FEPool(Borg):
             self.__lock.release()
             logging.debug("Lock /\ release found FE")
             return p
-        except:
+        except KeyError:
             logging.info(
                 "Frontend not found in pool, creating new for: container {}, swiftTenant {}, swiftToken {}".format(
                     container, swiftTenant,
@@ -107,38 +103,3 @@ class FEPool(Borg):
             self.__lock.release()
             logging.debug("Lock /\ release CREATED  NEW FE")
             return fe
-
-    def count(self):
-        try:
-            self.c += 1
-        except:
-            self.c = 0
-
-        print(self.c)
-
-'''
-class KeySourcePool(Borg):
-    """
-        A singleton that manages a pool of Key Sources.
-        only one instance of this class exists at any time -> only one Key source per container
-    """
-
-    def __init__(self):
-        Borg.__init__(self)
-
-        try:
-            self.__pool
-        except:
-            self.__pool = dict()
-
-    def addSource(self, containerName, source):
-        self.__pool[containerName] = source
-
-    def getSource(self, cascadeProperties, swiftBackend):
-        try:
-            return self.__pool[cascadeProperties.container_name]
-        except:
-            ks = MasterKeyStatic(cascadeProperties=cascadeProperties, swiftBackend=swiftBackend)
-            self.addSource(cascadeProperties.container_name, ks)
-            return ks
-'''
