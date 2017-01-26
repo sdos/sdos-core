@@ -53,6 +53,53 @@ def store_wrapped_key(containerNameSdosMgmt, swiftBackend, wrapped_key):
 
 ###############################################################################
 ###############################################################################
+# dummy key source
+# a random key each time. no back end requests, key is only in memory during run
+###############################################################################
+###############################################################################
+class MasterKeyDummy(object):
+    my_key_type = "dummy"
+
+    def __init__(self, cascadeProperties, swiftBackend):
+        self.cascadeProperties = cascadeProperties
+        self.get_new_key_and_replace_current()
+
+    ###############################################################################
+    # API for SDOS
+    ###############################################################################
+    def get_current_key(self):
+        return self.plainMasterKey
+
+    def get_new_key_and_replace_current(self):
+        self.plainMasterKey = CryptoLib.generateRandomKey()
+        self.plainMasterKeyBackup = self.plainMasterKey
+        return self.plainMasterKey
+
+    ###############################################################################
+    # API for Swift/Bluebox
+    ###############################################################################
+    def get_status_json(self):
+        return {
+            'type': self.my_key_type,
+            'is_unlocked': bool(self.plainMasterKey),
+            'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
+            'is_next_deletable_ready': True
+        }
+
+    def clear_next_deletable(self):
+        pass
+
+    def provide_next_deletable(self, passphrase):
+        pass
+
+    def lock_key(self):
+        self.plainMasterKey = None
+
+    def unlock_key(self, passphrase=None):
+        self.plainMasterKey = self.plainMasterKeyBackup
+
+###############################################################################
+###############################################################################
 # static key source
 # a static, hard-coded master key for testing/development
 ###############################################################################
@@ -212,6 +259,7 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 ###############################################################################
 known_sources = {
+    MasterKeyDummy.my_key_type: MasterKeyDummy,
     MasterKeyStatic.my_key_type: MasterKeyStatic,
     MasterKeyPassphrase.my_key_type: MasterKeyPassphrase
 }

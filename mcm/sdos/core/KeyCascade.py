@@ -106,30 +106,22 @@ class Cascade(object):
     ###############################################################################
     # Partition load / store
     ###############################################################################
-    def getPartition(self, partitionId, key, lockForWriting=False):
-        try:
-            return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=False,
-                                                 lockForWriting=lockForWriting)
-        except SystemError:
-            return None
-
     def generatePartition(self, partitionId):
         # return self.__getOrGeneratePartition(partitionId, key, createIfNotExists=True, lockForWriting=True)
         return KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
 
-    def __getOrGeneratePartition(self, partitionId, key, createIfNotExists=False, lockForWriting=False):
+    def getPartition(self, partitionId, key, lockForWriting=False):
         by = self.partitionStore.readPartition(partitionId, lockForWriting=lockForWriting)
-        self.log.info('getting partition: {}, bytestream object is: {}, createIfNotExists={}'.format(partitionId, by,
-                                                                                                     createIfNotExists))
-        if not by and not createIfNotExists:
-            raise SystemError('requested partition does not exist. Id: {}'.format(partitionId))
-
-        partition = KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
-        if by:
+        self.log.info('getting partition: {}, bytestream object is: {}'.format(partitionId, by))
+        if not by:
+            self.log.info('requested partition does not exist. Id: {}'.format(partitionId))
+            return None
+        else:
+            partition = KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
             pc = PartitionCrypt(key)
             partition.deserializeFromBytesIO(pc.decryptBytesIO(by))
             by.close()
-        return partition
+            return partition
 
     def __storePartition(self, partition, key):
         self.log.info('storing partition {}'.format(partition.getId()))
