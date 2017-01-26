@@ -26,9 +26,9 @@ import logging, math, os
 """
 # log_level = logging.CRITICAL
 # log_level = logging.ERROR
-# log_level = logging.WARNING
+log_level = logging.WARNING
 # log_level = logging.INFO
-log_level = logging.DEBUG
+#log_level = logging.DEBUG
 log_format = '%(asctime)s - %(module)s - %(levelname)s ##\t  %(message)s'
 
 """
