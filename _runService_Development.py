@@ -21,8 +21,8 @@ from mcm.sdos import configuration
 """
 
 app.run(
-			host=configuration.netHostProd,
-			port=int(configuration.netPortProd),
+			host=configuration.netHostDev,
+			port=int(configuration.netPortDev),
 			debug=True,
 			threaded=True
 )
