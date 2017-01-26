@@ -106,7 +106,7 @@ class CryptoLib(object):
 		ciphertext.seek(0)
 
 		if not (ciphertext.read(len(self.outerHeader)) == self.outerHeader):
-			raise TypeError('outer data header mismatch')
+			raise TypeError('outer data header mismatch - possibly corrupt ciphertext')
 
 		iv = ciphertext.read(self.blockSize)
 		cipher = AES.new(self.key, AES.MODE_CBC, iv)
@@ -114,7 +114,7 @@ class CryptoLib(object):
 		ciphertext.close()
 
 		if not (plaintext.read(len(self.innerHeader)) == self.innerHeader):
-			raise TypeError('inner data header mismatch')
+			raise TypeError('inner data header mismatch - possibly wrong decryption key')
 
 		plaintextNoHeader = io.BytesIO(plaintext.getvalue()[len(self.innerHeader):])
 		plaintext.close()

@@ -16,7 +16,12 @@ import logging
 
 
 class CascadeProperties(object):
-    def __init__(self, container_name, partition_bits=8, tree_height=2, master_key_type=None):
+    def __init__(self, container_name,
+                 partition_bits=8,
+                 tree_height=2,
+                 master_key_type=None,
+                 use_partition_cache=True,
+                 use_batch_delete=False):
         """
         	Key Cascade geometry / parameters
         	PARTITION_BITS8 # 256 slots for 8 bit, 4 slots for 2 bit
@@ -31,6 +36,8 @@ class CascadeProperties(object):
         self.container_name_mgmt = '_mcm-internal_{}'.format(self.container_name)
 
         self.master_key_type = master_key_type
+        self.use_partition_cache = use_partition_cache
+        self.use_batch_delete = use_batch_delete
 
         self.PARTITION_BITS = b
         self.TREE_HEIGHT = h

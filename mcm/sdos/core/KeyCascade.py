@@ -95,11 +95,11 @@ class Cascade(object):
     # Master Key
     ###############################################################################
     def __getCurrentMasterKey(self):
-        #return CryptoLib.digestKeyString('MASTERKEY')
+        # return CryptoLib.digestKeyString('MASTERKEY')
         return self.masterKeySource.get_current_key()
 
     def __getNewAndReplaceOldMasterKey(self):
-        #return CryptoLib.digestKeyString('MASTERKEY')
+        # return CryptoLib.digestKeyString('MASTERKEY')
         m = self.masterKeySource.get_new_key_and_replace_current()
         return m
 
@@ -214,7 +214,7 @@ class Cascade(object):
     def __secure_delete_top_down(self, name):
         # slot = self.keySlotMapper.getMapping(name)
         slot = self.keySlotMapper.resetMapping(name)
-        self.log.warning('SECURE DELETE top down: deleting object key for object: {} in slot: {}'.format(name, slot))
+        self.log.warning('Cascaded re-keying: deleting object key for object: {} in slot: {}'.format(name, slot))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])

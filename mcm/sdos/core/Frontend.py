@@ -109,6 +109,7 @@ class SdosFrontend(object):
         self.containerName = containerName
         self.si = swiftBackend
         self.cascadeProperties = cascadeProperties
+        self.batch_delete_log = list()
 
         # mappingStore = MappingPersistence.LocalFileMappingStore()
         mappingStore = MappingPersistence.SwiftMappingStore(
@@ -158,7 +159,11 @@ class SdosFrontend(object):
         return self.decrypt_object(c, name)
 
     def deleteObject(self, name, deleteDataObjectInSwift=True):
-        self.cascade.secureDeleteObjectKey(name)
+        if self.cascadeProperties.use_batch_delete:
+            self.batch_delete_log.append(name)
+            logging.warning("new batch delete log entry: {}".format(name))
+        else:
+            self.cascade.secureDeleteObjectKey(name)
         if deleteDataObjectInSwift:
             self.si.deleteObject(container=self.containerName, name=name)
 
