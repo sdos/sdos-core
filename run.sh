@@ -10,4 +10,4 @@ python _runService_Production.py
 
 # listen on all interfaces, no debug, multi-process
 # doesn't work ATM with SDOS for various reasons
-#_runService_Production.sh
+#./_runService_Production.sh
