@@ -45,12 +45,12 @@ class SwiftBackend(object):
 	def set_existing_authentication(self, tenant, token):
 		self.swiftC = swiftclient.client.Connection(preauthtoken=token,
 		                                            preauthurl=configuration.swift_store_url.format(tenant),
-		                                            retries=1,
+		                                            retries=5,
 		                                            insecure='true')
 
 	def authenticate(self, user, key):
 		self.log.debug('establishing NEW connection')
-		self.swiftC = swiftclient.client.Connection(authurl=configuration.swift_auth_url, user=user, key=key, retries=1,
+		self.swiftC = swiftclient.client.Connection(authurl=configuration.swift_auth_url, user=user, key=key, retries=5,
 		                                            insecure='true')
 
 	def _assertConnection(self):
