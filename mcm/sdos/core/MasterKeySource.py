@@ -68,14 +68,14 @@ class MasterKeyDummy(object):
     # API for SDOS
     ###############################################################################
     def get_current_key(self):
-        #return self.plainMasterKey
-        return CryptoLib.digestKeyString("hallo")
+        return self.plainMasterKey
+        #return CryptoLib.digestKeyString("hallo")
 
     def get_new_key_and_replace_current(self):
         self.plainMasterKey = CryptoLib.generateRandomKey()
         self.plainMasterKeyBackup = self.plainMasterKey
-        #return self.plainMasterKey
-        return CryptoLib.digestKeyString("hallo")
+        return self.plainMasterKey
+        #return CryptoLib.digestKeyString("hallo")
 
     ###############################################################################
     # API for Swift/Bluebox
