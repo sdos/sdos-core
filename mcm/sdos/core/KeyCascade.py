@@ -14,6 +14,8 @@
 
 import logging
 import math
+from threading import Event
+
 from sdos.crypto import CryptoLib
 from sdos.crypto.PartitionCrypt import PartitionCrypt
 from sdos import configuration
@@ -32,6 +34,8 @@ class Cascade(object):
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
+        self.cascade_open_for_reading = Event()
+        self.cascade_open_for_reading.set()
         self.log.info(
             "Initialized new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
@@ -135,11 +139,13 @@ class Cascade(object):
     # Insert new key, get existing key
     ###############################################################################
     def getKeyForNewObject(self, name):
+        self.cascade_open_for_reading.wait()
         slot = self.keySlotMapper.getOrCreateMapping(name)
         self.log.info('getting key for new object with name: {}, goes into slot: {}'.format(name, slot))
         return self._getKeyFromCascade(slot, createIfNotExists=True)
 
     def getKeyForStoredObject(self, name):
+        self.cascade_open_for_reading.wait()
         slot = self.keySlotMapper.getMapping(name)
         return self._getKeyFromCascade(slot, createIfNotExists=False)
 
@@ -203,11 +209,15 @@ class Cascade(object):
     # Delete: secure delete
     ###############################################################################
     def secureDeleteObjectKey(self, name):
+        self.cascade_open_for_reading.wait()
+        self.cascade_open_for_reading.clear()
         try:
             # self.__secure_delete_bottom_up(name)
             self.__secure_delete_top_down(name)
         except Exception as e:
             raise Exception("Secure delete failed. {}".format(e))
+        finally:
+            self.cascade_open_for_reading.set()
 
     ###############################################################################
     # SECURE DELETE TOP DOWN
