@@ -114,7 +114,7 @@ class CryptoLib(object):
 		ciphertext.close()
 
 		if not (plaintext.read(len(self.innerHeader)) == self.innerHeader):
-			raise TypeError('inner data header mismatch - possibly wrong decryption key')
+			raise TypeError('inner data header mismatch - possibly wrong decryption key: {}...'.format(self.key[:5]))
 
 		plaintextNoHeader = io.BytesIO(plaintext.getvalue()[len(self.innerHeader):])
 		plaintext.close()

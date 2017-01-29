@@ -115,17 +115,20 @@ class Cascade(object):
         return KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
 
     def getPartition(self, partitionId, key, lockForWriting=False):
+        self.log.info('getting partition: {}'.format(partitionId))
         by = self.partitionStore.readPartition(partitionId, lockForWriting=lockForWriting)
-        self.log.info('getting partition: {}, bytestream object is: {}'.format(partitionId, by))
         if not by:
             self.log.info('requested partition does not exist. Id: {}'.format(partitionId))
             return None
         else:
-            partition = KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
-            pc = PartitionCrypt(key)
-            partition.deserializeFromBytesIO(pc.decryptBytesIO(by))
-            by.close()
-            return partition
+            try:
+                partition = KeyPartition(partitionId=partitionId, cascadeProperties=self.cascadeProperties)
+                pc = PartitionCrypt(key)
+                partition.deserializeFromBytesIO(pc.decryptBytesIO(by))
+                by.close()
+                return partition
+            except TypeError as e:
+                raise TypeError("error parsing partition {} - {}".format(partitionId, e))
 
     def __storePartition(self, partition, key):
         self.log.info('storing partition {}'.format(partition.getId()))
@@ -159,6 +162,8 @@ class Cascade(object):
         partitionId = self.__getPartitionIdForSlot(slot)
         if (0 == partitionId):
             partitionKey = self.__getCurrentMasterKey()
+            print("got key")
+            print(partitionKey)
         else:
             partitionKey = self._getKeyFromCascade(partitionId, createIfNotExists)
 
@@ -227,13 +232,20 @@ class Cascade(object):
         self.log.warning('Cascaded re-keying: deleting object key for object: {} in slot: {}'.format(name, slot))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
+        print("replaced!!!")
+        print(oldMasterKey, newMasterKey)
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
         """
-        This is the main cascaded re-keying method; also batch-capable.
-        recursively we modify the partitions top-down along all necessary paths to
-        the object keys that should be cleared
+        This is the cascaded re-keying method
+        here we delete keys in leave nodes (object-key partitions), and save these
+        modified partitions encrypted with a new key (re-keyed). This new key replaces the old
+        one in the parent node. This parent node (now modified) is also re-keyed and stored.
+        Recursively, nodes are re-keyed (decrypted, modified, encrypted with new key) up to the root.
+
+        This implementation accepts a list of keys to delete. It executes the re-keying (and then deleting in the leaves)
+        depth-first, and so only visits each necessary node once.
 
         :param partitionKeyOld: the current key for the partition
         :param partitionKeyNew: the new key to use after modifying the partition
@@ -243,7 +255,6 @@ class Cascade(object):
         the slots here must be "globalslots" i.e. in the global slot range and not local to one partition
         :return:
         """
-        # first we lod and decrypt the current partition
         thisPartition = self.getPartition(partitionId, partitionKeyOld, lockForWriting=True)
         slotsToModify = self.__get_list_of_slots_to_branches(objectKeySlots, partitionId)
         self.log.info("cascaded re-keying on partition {}, targeting object Key IDs {}. following paths to: {}".format(
