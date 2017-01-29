@@ -214,10 +214,10 @@ class Cascade(object):
             self.__storePartition(partition, partitionKey)
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
-        elif key and createIfNotExists:
+        #elif key and createIfNotExists:
             # If the partition did exist and also had the key, we need to manually release the a-priori lock.
             # In all other cases, the partition was saved above which unlocks implicitly
-            self.partitionStore.unlockPartition(partitionId)
+        #    self.partitionStore.unlockPartition(partitionId)
         self.log.debug(
             '_getKeyFromCascade for slot: {}, in partition: {}, is localSlot: {}'.format(slot, partitionId, localSlot))
         return key
