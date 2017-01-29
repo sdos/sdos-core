@@ -14,7 +14,7 @@
 
 import logging
 import math
-from threading import Event
+from threading import Event, Lock, Condition
 
 from sdos.crypto import CryptoLib
 from sdos.crypto.PartitionCrypt import PartitionCrypt
@@ -25,6 +25,27 @@ from sdos.core.KeyPartition import KeyPartition
 class Cascade(object):
     """
     Key Cascade main object. One instance of this should exist for each key-cascade (for each container)
+
+    self.num_cr_treads = 0
+
+    The number of create and read threads.
+    key reads and creates may run in parallel (creates wait on each other for writing individual partitions)
+    but they all get blocked by a rekey operation which needs exclusive access.
+     The rekey then has to wait until all c/r threads are done until it can start.
+     This number is used by the rekey operation to wait for free access
+
+
+    self.cascade_open_for_reading = Event()
+    self.cascade_open_for_reading.set()
+
+    readers don't wait on partition locks since they can run during creates.
+    But they have to wait for rekey, so we have an event that the rekey op. sets to false to block all reads&creates
+    when re-set, they start again.
+
+
+    self.cascade_rekey_lock = Lock()
+
+    This lock serializes the rekey/secure delete. --> synchronizes changing of the single master key
     """
 
     def __init__(self, partitionStore, keySlotMapper, masterKeySource, cascadeProperties):
@@ -34,8 +55,7 @@ class Cascade(object):
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
-        self.cascade_open_for_reading = Event()
-        self.cascade_open_for_reading.set()
+        self.cascade_lock = Lock()
         self.log.info(
             "Initialized new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
@@ -142,15 +162,25 @@ class Cascade(object):
     # Insert new key, get existing key
     ###############################################################################
     def getKeyForNewObject(self, name):
-        self.cascade_open_for_reading.wait()
-        slot = self.keySlotMapper.getOrCreateMapping(name)
-        self.log.info('getting key for new object with name: {}, goes into slot: {}'.format(name, slot))
-        return self._getKeyFromCascade(slot, createIfNotExists=True)
+        return self.__get_new_or_existing_key(name=name, createIfNotExists=True)
 
     def getKeyForStoredObject(self, name):
-        self.cascade_open_for_reading.wait()
-        slot = self.keySlotMapper.getMapping(name)
-        return self._getKeyFromCascade(slot, createIfNotExists=False)
+        return self.__get_new_or_existing_key(name=name, createIfNotExists=False)
+
+    def __get_new_or_existing_key(self, name, createIfNotExists):
+        self.cascade_lock.acquire()
+        try:
+            if createIfNotExists:
+                slot = self.keySlotMapper.getOrCreateMapping(name)
+            else:
+                slot = self.keySlotMapper.getMapping(name)
+            self.log.info(
+                'getting key for (new?{}) object with name: {}, goes into slot: {}'.format(createIfNotExists, name,
+                                                                                           slot))
+            k = self._getKeyFromCascade(slot, createIfNotExists=createIfNotExists)
+        finally:
+            self.cascade_lock.release()
+        return k
 
     def _getKeyFromCascade(self, slot, createIfNotExists=False):
         """
@@ -162,12 +192,14 @@ class Cascade(object):
         partitionId = self.__getPartitionIdForSlot(slot)
         if (0 == partitionId):
             partitionKey = self.__getCurrentMasterKey()
-            print("got key")
-            print(partitionKey)
+            # print("got key")
+            # print(partitionKey[:5])
         else:
             partitionKey = self._getKeyFromCascade(partitionId, createIfNotExists)
 
         # if create is allowed, we lock the partition a-priori. It could be that we add a new key...
+        # this also means that we wait for release of the write lock on that partition.
+        # in the other case, we don't wait for that lock and read immediately
         partition = self.getPartition(partitionId, partitionKey, lockForWriting=createIfNotExists)
         if not partition and createIfNotExists:
             partition = self.generatePartition(partitionId)
@@ -214,15 +246,14 @@ class Cascade(object):
     # Delete: secure delete
     ###############################################################################
     def secureDeleteObjectKey(self, name):
-        self.cascade_open_for_reading.wait()
-        self.cascade_open_for_reading.clear()
+        self.cascade_lock.acquire()
         try:
             # self.__secure_delete_bottom_up(name)
             self.__secure_delete_top_down(name)
         except Exception as e:
             raise Exception("Secure delete failed. {}".format(e))
         finally:
-            self.cascade_open_for_reading.set()
+            self.cascade_lock.release()
 
     ###############################################################################
     # SECURE DELETE TOP DOWN
@@ -232,8 +263,8 @@ class Cascade(object):
         self.log.warning('Cascaded re-keying: deleting object key for object: {} in slot: {}'.format(name, slot))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
-        print("replaced!!!")
-        print(oldMasterKey, newMasterKey)
+        # print("replaced!!!")
+        # print(oldMasterKey[:5], " ==> ", newMasterKey[:5])
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
