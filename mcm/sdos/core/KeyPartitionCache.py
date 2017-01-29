@@ -32,7 +32,9 @@ class KeyPartitionCache(object):
         self.partitionStore = partitionStore
         self.partitionCache = dict()
         self.__dirty_partitions = set()
-        self.__locks = dict()
+        # partition-level locking is not useful since all methods end up locking/waiting for part. 0 anyway...
+        # cascade-level locking is now used
+        #self.__locks = dict()
         self.__watch_and_store_partitions()
 
     def writePartition(self, partitionId, by):
@@ -45,7 +47,7 @@ class KeyPartitionCache(object):
         logging.debug("writing partition to cache: {}".format(partitionId))
         self.partitionCache[partitionId] = by.getbuffer()
         self.__dirty_partitions.add(partitionId)
-        self.unlockPartition(partitionId)
+        #self.unlockPartition(partitionId)
 
     def readPartition(self, partitionId, lockForWriting=False):
         """
@@ -55,8 +57,8 @@ class KeyPartitionCache(object):
         :return:
         """
         logging.debug("reading partition from cache: {}".format(partitionId))
-        if lockForWriting:
-            self.lockPartition(partitionId)
+        #if lockForWriting:
+        #    self.lockPartition(partitionId)
 
         if partitionId in self.partitionCache:
             logging.debug("partition found in cache: {}".format(partitionId))
@@ -86,7 +88,7 @@ class KeyPartitionCache(object):
                         pid, len(self.__dirty_partitions)))
                 break
         threading.Timer(10, self.__watch_and_store_partitions).start()
-
+'''
     def lockPartition(self, partitionId):
         """
 
@@ -109,3 +111,4 @@ class KeyPartitionCache(object):
         logging.info("releasing lock on partition {}".format(partitionId))
         if partitionId in self.__locks:
             self.__locks[partitionId].release()
+'''
