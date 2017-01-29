@@ -54,7 +54,7 @@ def dispatch_get_head(sdos_frontend, thisObject):
             return Response(response=treeGeometry.get_partition_mapping_json(cascade=cascade), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_cascade_stats"):
-            return Response(response=treeGeometry.get_cascade_stats_json(cascade=cascade), status=200,
+            return Response(response=treeGeometry.get_cascade_stats_json(sdos_frontend=sdos_frontend), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_slot_utilization10"):
             return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,

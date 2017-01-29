@@ -95,9 +95,10 @@ class FEPool(Borg):
             sp = SwiftPool()
             sb = sp.getConn(swiftTenant, swiftToken)
             props = sb.get_sdos_properties(container)
+            #print(props)
             h = props[2] - 1  # tree height is without root internally, but with root externally
             cascadeProperties = CascadeProperties(container_name=container, partition_bits=props[1], tree_height=h,
-                                                  master_key_type=props[3])
+                                                  master_key_type=props[3], use_batch_delete=props[4])
             fe = Frontend.SdosFrontend(container, swiftBackend=sb, cascadeProperties=cascadeProperties, useCache=True)
             self.addFE(container, swiftTenant, swiftToken, fe)
             self.__lock.release()

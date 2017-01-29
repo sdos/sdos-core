@@ -28,19 +28,21 @@ def get_partition_mapping_json(cascade):
     return json.dumps(cascade.get_reverse_object_key_partition_mapping())
 
 
-def get_cascade_stats_json(cascade):
-    mapper = cascade.keySlotMapper
+def get_cascade_stats_json(sdos_frontend):
+    mapper = sdos_frontend.cascade.keySlotMapper
     m = mapper.getMappingDict()
     return json.dumps({"numObjects": len(m),
-                       "numSlots": cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS,
-                       "freeSlots": cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS - len(m),
+                       "numSlots": sdos_frontend.cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS,
+                       "freeSlots": sdos_frontend.cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS - len(m),
                        "utilization": str(
-                           round(100 / cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m),
+                           round(100 / sdos_frontend.cascade.cascadeProperties.NUMBER_OF_SLOTS_IN_OBJECT_KEY_PARTITIONS * len(m),
                                  2)) + "%",
-                       "levels": cascade.cascadeProperties.TREE_HEIGHT + 1,
-                       "partitionSize": cascade.cascadeProperties.PARTITION_SIZE,
-                       "numPartitions": cascade.cascadeProperties.TOTAL_NUMER_OF_PARTITIONS,
-                       "masterKeySource": cascade.masterKeySource.get_status_json()
+                       "levels": sdos_frontend.cascade.cascadeProperties.TREE_HEIGHT + 1,
+                       "partitionSize": sdos_frontend.cascade.cascadeProperties.PARTITION_SIZE,
+                       "numPartitions": sdos_frontend.cascade.cascadeProperties.TOTAL_NUMER_OF_PARTITIONS,
+                       "masterKeySource": sdos_frontend.cascade.masterKeySource.get_status_json(),
+                       "batchDelete": sdos_frontend.cascade.cascadeProperties.use_batch_delete,
+                       "batchDeleteLogLength": len(sdos_frontend.batch_delete_log)
                        })
 
 
