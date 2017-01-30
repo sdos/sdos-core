@@ -248,24 +248,39 @@ class Cascade(object):
     def secureDeleteObjectKey(self, name):
         self.cascade_lock.acquire()
         try:
-            # self.__secure_delete_bottom_up(name)
             self.__secure_delete_top_down(name)
         except Exception as e:
             raise Exception("Secure delete failed. {}".format(e))
         finally:
             self.cascade_lock.release()
 
+    def secureDeleteObjectKeyBatch(self, names):
+        self.cascade_lock.acquire()
+        try:
+            self.__secure_delete_top_down_batch(names)
+        except Exception as e:
+            raise Exception("Batched secure delete failed. {}".format(e))
+        finally:
+            self.cascade_lock.release()
+
     ###############################################################################
     # SECURE DELETE TOP DOWN
     def __secure_delete_top_down(self, name):
-        # slot = self.keySlotMapper.getMapping(name)
         slot = self.keySlotMapper.resetMapping(name)
         self.log.warning('Cascaded re-keying: deleting object key for object: {} in slot: {}'.format(name, slot))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
-        # print("replaced!!!")
-        # print(oldMasterKey[:5], " ==> ", newMasterKey[:5])
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, [slot])
+
+    def __secure_delete_top_down_batch(self, names):
+        slots = [self.keySlotMapper.resetMapping(name) for name in names]
+
+        self.log.warning('Cascaded batch re-keying starting. Batch length: {}'.format(len(slots)))
+        self.log.debug('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
+        oldMasterKey = self.__getCurrentMasterKey()
+        newMasterKey = self.__getNewAndReplaceOldMasterKey()
+
+        self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, slots)
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
         """

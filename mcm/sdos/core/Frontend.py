@@ -109,7 +109,7 @@ class SdosFrontend(object):
         self.containerName = containerName
         self.si = swiftBackend
         self.cascadeProperties = cascadeProperties
-        self.batch_delete_log = list()
+        self.batch_delete_log = set()
 
         # mappingStore = MappingPersistence.LocalFileMappingStore()
         mappingStore = MappingPersistence.SwiftMappingStore(
@@ -159,13 +159,37 @@ class SdosFrontend(object):
         return self.decrypt_object(c, name)
 
     def deleteObject(self, name, deleteDataObjectInSwift=True):
+        """
+        delete an individual object. this triggers the secure delete / re-keying on the cascade
+        unless batch delete is activated, then the frontend will save deletions to a log and
+        not call the cascade for re-keying
+        :param name:
+        :param deleteDataObjectInSwift:
+        :return:
+        """
         if self.cascadeProperties.use_batch_delete:
-            self.batch_delete_log.append(name)
-            logging.warning("new batch delete log entry: {}".format(name))
+            self.batch_delete_log.add(name)
+            logging.info("new batch delete log entry: {}".format(name))
         else:
             self.cascade.secureDeleteObjectKey(name)
         if deleteDataObjectInSwift:
             self.si.deleteObject(container=self.containerName, name=name)
+
+    def batch_delete_start(self):
+        """
+        here we process the logged delete requests.
+        The key cascade can process them all at once in a single re-key operation
+        :return:
+        """
+        this_batch = self.batch_delete_log.copy()
+        self.batch_delete_log.clear()
+        logging.warning("executing batch deletions on {}. Log has a length of {}".format(self.containerName, len(this_batch)))
+        try:
+            self.cascade.secureDeleteObjectKeyBatch(names=this_batch)
+        except Exception as e:
+            self.batch_delete_log.update(this_batch)
+            raise SystemError("Batch log was restored. {}".format(e))
+
 
 ###############################################################################
 ###############################################################################

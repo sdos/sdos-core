@@ -99,6 +99,9 @@ def dispatch_put_post(sdos_frontend, thisObject, data):
         elif is_operation("sdos_masterkey_lock"):
             return Response(response=cascade.masterKeySource.lock_key(), status=200,
                             mimetype="application/json")
+        elif is_operation("sdos_batch_delete_start"):
+            return Response(response=sdos_frontend.batch_delete_start(), status=200,
+                            mimetype="application/json")
         ###############################################################################
         # unknown
         ###############################################################################
