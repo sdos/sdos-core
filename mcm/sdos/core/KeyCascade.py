@@ -279,7 +279,6 @@ class Cascade(object):
         self.log.debug('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
-
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, slots)
 
     def __cascaded_rekey_top_down(self, partitionKeyOld, partitionKeyNew, partitionId, objectKeySlots):
