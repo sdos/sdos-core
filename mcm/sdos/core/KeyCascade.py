@@ -246,6 +246,8 @@ class Cascade(object):
     # Delete: secure delete
     ###############################################################################
     def secureDeleteObjectKey(self, name):
+        if not name:
+            raise ValueError("no obj name supplied")
         self.cascade_lock.acquire()
         try:
             self.__secure_delete_top_down(name)
@@ -255,6 +257,8 @@ class Cascade(object):
             self.cascade_lock.release()
 
     def secureDeleteObjectKeyBatch(self, names):
+        if not names:
+            raise ValueError("no obj name list supplied")
         self.cascade_lock.acquire()
         try:
             self.__secure_delete_top_down_batch(names)
