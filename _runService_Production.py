@@ -21,7 +21,7 @@ from mcm.sdos import configuration
 """
 
 app.run(
-			host=configuration.my_endpoint_host,
+			host=configuration.my_bind_host,
 			port=int(configuration.my_endpoint_port),
 			debug=False,
 			threaded=True

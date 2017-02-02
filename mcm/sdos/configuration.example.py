@@ -44,9 +44,11 @@ Swift store   (p. 8080) _____/
 """
 
 # configure the proxy endpoint that clients connect to
+# my_endpoint_host gets advertised to clients after AUTH. So this needs to be the address that clients see
 
 my_endpoint_port = 3000
-my_endpoint_host = os.getenv("MY_ENDPOINT_HOST", "127.0.0.1")
+my_endpoint_host = os.getenv("MY_ENDPOINT_HOST", "localhost")
+my_bind_host = "0.0.0.0"
 
 my_endpoint_store_url = "http://{}:{}/v1/AUTH_{}".format(my_endpoint_host, my_endpoint_port, "{}")
 

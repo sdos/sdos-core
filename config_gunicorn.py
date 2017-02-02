@@ -13,7 +13,7 @@ from mcm.sdos import configuration
 import multiprocessing
 
 
-bind = "{}:{}".format(configuration.my_endpoint_host, configuration.my_endpoint_port)
+bind = "{}:{}".format(configuration.my_bind_host, configuration.my_endpoint_port)
 workers = multiprocessing.cpu_count() * 2 + 1
 #workers = workers * 1
 workers = 1
