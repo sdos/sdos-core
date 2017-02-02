@@ -21,7 +21,7 @@ from mcm.sdos.util import treeGeometry
 from sdos.core import CascadeProperties
 from sdos.swift import SwiftBackend
 
-logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
+logging.basicConfig(level=configuration.log_level)
 log = logging.getLogger()
 
 ###############################################################################

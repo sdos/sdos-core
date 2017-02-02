@@ -67,7 +67,7 @@ def replaceStorageUrl(swiftResponse):
     if not swiftUrl.startswith(configuration.swift_store_url.format("")):
         raise HttpError("swift returned wrong storage URL")
     swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
-    swiftResponse['X-Storage-Url'] = configuration.proxy_store_url.format(swiftAuthName)
+    swiftResponse['X-Storage-Url'] = configuration.my_endpoint_store_url.format(swiftAuthName)
 
 
 def replaceStorageUrl_authv2(auth_response):
@@ -82,7 +82,7 @@ def replaceStorageUrl_authv2(auth_response):
     tenant_id = ar["access"]["token"]["tenant"]["id"]
     my_endpoint = [{'adminURL': 'http://129.69.209.131:8080',
                     'region': 'RegionOne',
-                    'publicURL': configuration.proxy_store_url.format(tenant_id),
+                    'publicURL': configuration.my_endpoint_store_url.format(tenant_id),
                     'id': '1dc55ed5c82f4cd9a98d9f059729422f',
                     'internalURL': 'http://129.69.209.131:8080/v1/AUTH_ea012720129645d9b32b23b4af5c154f'
                     }]

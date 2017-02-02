@@ -23,7 +23,7 @@ from mcm.sdos.core import Frontend
 from sdos.core.CascadeProperties import CascadeProperties
 from sdos.swift import SwiftBackend
 
-logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
+logging.basicConfig(level=configuration.log_level)
 log = logging.getLogger()
 
 
