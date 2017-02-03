@@ -48,25 +48,28 @@ def dispatch_get_head(sdos_frontend, thisObject):
         # statistics, visualization
         ###############################################################################
         if is_operation("sdos_used_partitions"):
-            return Response(response=treeGeometry.get_used_partitions_json(cascade=cascade), status=200,
+            return Response(response=treeGeometry.sdos_used_partitions(cascade=cascade), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_partition_mapping"):
-            return Response(response=treeGeometry.get_partition_mapping_json(cascade=cascade), status=200,
+            return Response(response=treeGeometry.sdos_partition_mapping(cascade=cascade), status=200,
+                            mimetype="application/json")
+        elif is_operation("sdos_batch_delete_log"):
+            return Response(response=treeGeometry.sdos_batch_delete_log(sdos_frontend=sdos_frontend), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_cascade_stats"):
-            return Response(response=treeGeometry.get_cascade_stats_json(sdos_frontend=sdos_frontend), status=200,
+            return Response(response=treeGeometry.sdos_cascade_stats(sdos_frontend=sdos_frontend), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_slot_utilization10"):
-            return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,
+            return Response(response=treeGeometry.sdos_slot_utilization(cascade=cascade, NUMFIELDS=10), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_slot_utilization100"):
-            return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=100), status=200,
+            return Response(response=treeGeometry.sdos_slot_utilization(cascade=cascade, NUMFIELDS=100), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_slot_utilization1000"):
-            return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=1000), status=200,
+            return Response(response=treeGeometry.sdos_slot_utilization(cascade=cascade, NUMFIELDS=1000), status=200,
                             mimetype="application/json")
         elif is_operation("sdos_slot_utilization10000"):
-            return Response(response=treeGeometry.get_slot_utilization(cascade=cascade, NUMFIELDS=10000), status=200,
+            return Response(response=treeGeometry.sdos_slot_utilization(cascade=cascade, NUMFIELDS=10000), status=200,
                             mimetype="application/json")
         ###############################################################################
         # unknown

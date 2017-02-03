@@ -280,7 +280,7 @@ class Cascade(object):
         slots = [self.keySlotMapper.resetMapping(name) for name in names]
 
         self.log.warning('Cascaded batch re-keying starting. Batch length: {}'.format(len(slots)))
-        self.log.debug('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
+        self.log.info('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, slots)
