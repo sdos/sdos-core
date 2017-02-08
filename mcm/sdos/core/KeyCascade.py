@@ -94,6 +94,13 @@ class Cascade(object):
             result[objKeyPartition] = partition
         return result
 
+    def __assert_key_replace_possible(self):
+        s = self.masterKeySource.get_status_json()
+        if not s["is_unlocked"]:
+            raise SystemError("Master key locked; re-keying not possible")
+        elif not s["is_next_deletable_ready"]:
+            raise SystemError("Next deletable key not ready; re-keying not possible")
+
     ###############################################################################
     # Utility
     ###############################################################################
@@ -250,6 +257,7 @@ class Cascade(object):
             raise ValueError("no obj name supplied")
         self.cascade_lock.acquire()
         try:
+            self.__assert_key_replace_possible()
             self.__secure_delete_top_down(name)
         except Exception as e:
             raise Exception("Secure delete failed. {}".format(e))
@@ -261,6 +269,7 @@ class Cascade(object):
             raise ValueError("no obj name list supplied")
         self.cascade_lock.acquire()
         try:
+            self.__assert_key_replace_possible()
             self.__secure_delete_top_down_batch(names)
         except Exception as e:
             raise Exception("Batched secure delete failed. {}".format(e))
