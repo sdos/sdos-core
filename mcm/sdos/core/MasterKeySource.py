@@ -254,6 +254,86 @@ class MasterKeyPassphrase(object):
         except:
             raise KeyError("wrong passphrase. Failed decrypting master key")
 
+###############################################################################
+###############################################################################
+# tpm key source
+# use a tpm key as deletable key. the master key will be encrypted with a different
+# password each time.
+###############################################################################
+###############################################################################
+class MasterKeyTPM(object):
+    my_key_type = "TPM"
+    def __init__(self, cascadeProperties, swiftBackend,key_id=0):
+        self.cascadeProperties = cascadeProperties
+        self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
+        self.swiftBackend = swiftBackend
+        self.plainMasterKey = None
+        #TODO or get key_id from cascadeProperties?
+        self.keyId=key_id
+        try:
+            self.unlock_key()
+        except:
+            logging.error("unlocking master key failed for {}! Key source is not ready...".format(
+                self.containerNameSdosMgmt))
+
+    ###############################################################################
+    # API for SDOS
+    ###############################################################################
+    def get_current_key(self):
+        if not self.plainMasterKey:
+            raise KeyError("Master key is not available")
+        return self.plainMasterKey
+
+    def get_new_key_and_replace_current(self, first_run=False):
+        #if not self.next_deletable:
+            #raise KeyError("can't replace current master key without new wrapping (deletable) key")
+        if not first_run and not self.plainMasterKey:
+            raise KeyError("not allowed while current master is locked")
+        new_master = CryptoLib.generateRandomKey()
+        self.plainMasterKey = new_master
+        k = tpm.get_new_key_and_replace_current(self.keyId)
+        wrapped_key = k.bind(new_master)
+        #TODO ADD key id to store_wrapped_key?
+
+        store_wrapped_key(containerNameSdosMgmt=self.containerNameSdosMgmt, swiftBackend=self.swiftBackend,
+                          wrapped_key=wrapped_key)
+        return self.plainMasterKey
+
+    ###############################################################################
+    # API for Swift/Bluebox
+    ###############################################################################
+    def get_status_json(self):
+        return {
+            'type': self.my_key_type,
+            'is_unlocked': bool(self.plainMasterKey),
+            'key_id': self.keyId,
+            'is_next_deletable_ready': True
+        }
+
+    def clear_next_deletable(self):
+        pass
+
+    def provide_next_deletable(self):
+        pass
+
+    def lock_key(self):
+        self.plainMasterKey = None
+
+    def unlock_key(self):
+        logging.info("unlocking the master key from {}".format(self.containerNameSdosMgmt))
+        by = load_wrapped_key(containerNameSdosMgmt=self.containerNameSdosMgmt, swiftBackend=self.swiftBackend)
+        if not by:
+            logging.error("no wrapped key found in {}. Assuming first run, creating default key".format(
+                self.containerNameSdosMgmt))
+            self.get_new_key_and_replace_current(self.keyId,first_run=True)
+            return
+        try:            
+            dc = tpm.get_current(self.keyId)
+            self.plainMasterKey = dc.unbind(by)
+        except:
+            raise KeyError("TPM Error. Failed decrypting master key")
+
+
 
 ###############################################################################
 ###############################################################################
@@ -263,7 +343,8 @@ class MasterKeyPassphrase(object):
 known_sources = {
     MasterKeyDummy.my_key_type: MasterKeyDummy,
     MasterKeyStatic.my_key_type: MasterKeyStatic,
-    MasterKeyPassphrase.my_key_type: MasterKeyPassphrase
+    MasterKeyPassphrase.my_key_type: MasterKeyPassphrase,
+    MasterKeyTPM.my_key_type: MasterKeyTPM
 }
 
 
