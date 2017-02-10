@@ -29,7 +29,7 @@ from swiftclient.exceptions import ClientException
 
 from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
-from mcm.sdos.service import httpBackend, app, pseudoObjects
+from mcm.sdos.service import httpBackend, app, pseudoObjects, pseudoContainer
 from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.parallelExecution.Pool import SwiftPool, FEPool
 
@@ -251,6 +251,9 @@ def handle_account(thisAuth):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE", "HEAD"])
 @log_requests
 def handle_container(thisAuth, thisContainer):
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        return "", 200
+
     myUrl = get_proxy_request_url(thisAuth, thisContainer)
     s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
                                            reqArgs=request.args, reqData=request.data)
@@ -266,6 +269,10 @@ def handle_container(thisAuth, thisContainer):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET", "HEAD"])
 @log_requests
 def handle_object_get(thisAuth, thisContainer, thisObject):
+
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        return pseudoContainer.dispatch(thisObject=thisObject)
+
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
@@ -306,6 +313,9 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT", "POST"])
 @log_requests
 def handle_object_put(thisAuth, thisContainer, thisObject):
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        return pseudoContainer.dispatch(thisObject=thisObject, data=request.headers)
+
     myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 

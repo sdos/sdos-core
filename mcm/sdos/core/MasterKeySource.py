@@ -264,7 +264,7 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 ###############################################################################
 class MasterKeyTPM(object):
-    my_key_type = "TPM"
+    my_key_type = "tpm"
     def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
         self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
