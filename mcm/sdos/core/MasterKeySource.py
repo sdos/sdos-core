@@ -18,6 +18,8 @@ from swiftclient import ClientException
 from sdos.crypto import CryptoLib
 from sdos.crypto.DataCrypt import DataCrypt
 
+import mcm.sdos.util.tpmLib as tpm
+
 OUTERHEADER = 'SDOS_MKEY_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
 KEYOBJNAME = 'masterkey.sdos'
 
@@ -263,13 +265,13 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 class MasterKeyTPM(object):
     my_key_type = "TPM"
-    def __init__(self, cascadeProperties, swiftBackend,key_id=0):
+    def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
         self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
         #TODO or get key_id from cascadeProperties?
-        self.keyId=key_id
+        self.keyId = 0
         try:
             self.unlock_key()
         except:
