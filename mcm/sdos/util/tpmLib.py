@@ -1,209 +1,192 @@
 import binascii
 import uuid
+
+from mcm.sdos.crypto.CryptoLib import getSha1Bytes
 from pytss import *
 from pytss.tspi_defines import *
+from mcm.sdos.parallelExecution import Borg
+
+class TpmLib(Borg):
+    srk_uuid = uuid.UUID('{00000000-0000-0000-0000-000000000001}')
+    keyFlags = TSS_KEY_TYPE_BIND | TSS_KEY_SIZE_2048 | TSS_KEY_NO_AUTHORIZATION | TSS_KEY_NOT_MIGRATABLE
+    #srkSecret = getSha1Bytes("ot6do5dFj2anjVZKDtHsy4s".encode("UTF-8"))
+    ownerSecret = getSha1Bytes("tYb6cBk7ytmzzGTo5ehxaih".encode("UTF-8"))
+
+    def __init__(self):
+        Borg.__init__(self)
+
+        print("TPMlib init")
+        try:
+            self.context
+        except:
+            self.context = None
+            self.srk = None
+        #self.unlock("ot6do5dFj2anjVZKDtHsy4s")
 
 
-srk_uuid = uuid.UUID('{00000000-0000-0000-0000-000000000001}')
-old_uuid = uuid.UUID('{10000000-0000-0000-0000-000000000001}')
-new_uuid = uuid.UUID('{20000000-0000-0000-0000-000000000001}')
-masterKeyFilePath = "masterkey"
-
-keyFlags = TSS_KEY_TYPE_BIND | TSS_KEY_SIZE_2048 | TSS_KEY_NO_AUTHORIZATION | TSS_KEY_NOT_MIGRATABLE
-
-srkSecret = bytearray([0] * 20)
 
 
-def idxToUUID(idx):
-    return uuid.UUID('{' + str(idx).zfill(8) + '-0000-0000-0000-000000000001}')
+    def is_unlocked(self):
+        return bool(self.context)
 
 
-def take_ownership(context):
-    """Take ownership of a TPM
-    :param context: The TSS context to use
-    :returns: True on ownership being taken, False if the TPM is already owned
-    """
-    tpm = context.get_tpm_object()
-    tpmpolicy = tpm.get_policy_object(TSS_POLICY_USAGE)
-    tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, srkSecret)
-
-    srk = context.create_rsa_key(TSS_KEY_TSP_SRK | TSS_KEY_AUTHORIZATION)
-    srkpolicy = srk.get_policy_object(TSS_POLICY_USAGE)
-    srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, srkSecret)
-
-    try:
-        tpm.take_ownership(srk)
-    except tspi_exceptions.TPM_E_DISABLED_CMD:
-        return False
-
-    return True
+    def unlock(self, srk_password_string):
+        self.srkSecret = getSha1Bytes(str(srk_password_string).encode("UTF-8"))
+        self.__create_context()
 
 
-def getSrkKey(context):
-    srk = context.load_key_by_uuid(TSS_PS_TYPE_SYSTEM, srk_uuid)
-    srkpolicy = srk.get_policy_object(TSS_POLICY_USAGE)
-    srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, srkSecret)
-    return srk
+    def lock(self):
+        self.context = None
+        self.srk = None
 
 
-def getMasterkeyNumberArray():
-    # return "MASTERKEY"
-    return [77, 65, 83, 84, 69, 82, 75, 69, 89]
+    def __create_context(self):
+        self.context = TspiContext()
+        self.context.connect()
+        self.srk = self.__getSrkKey()
+
+    def __idxToUUID(self, idx):
+        return uuid.UUID('{' + str(idx).zfill(8) + '-0000-0000-0000-000000000002}')
 
 
-def getMasterkeyNumberArrayOne():
-    # return "MASTERKEY1"
-    return [77, 65, 83, 84, 69, 82, 75, 69, 89, 49]
+    def __getSrkKey(self):
+        srk = self.context.load_key_by_uuid(TSS_PS_TYPE_SYSTEM, self.srk_uuid)
+        srkpolicy = srk.get_policy_object(TSS_POLICY_USAGE)
+        srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.srkSecret)
+        return srk
 
 
-def clearKeys(context):
-    try:
-        k1 = context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, old_uuid)
-        k1.unregisterKey()
-        k2 = context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, new_uuid)
-        k2.unregisterKey()
-    except:
-        pass
+
+    def clearKeys(self):
+        self.__create_context()
+        for k in self.context.list_keys():
+            key = uuid.UUID(k)
+            if key == self.srk_uuid:
+                continue
+            k1 = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, key)
+            k1.unregisterKey()
 
 
-def get_current_key(idx, context=None):
-    if context is None:
-        context = TspiContext()
-        context.connect()
-    take_ownership(context)
-    srk = getSrkKey(context)
-    k = context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, idxToUUID(idx))
-    return k
+    def probe_tpm_function(self):
+        self.__create_context()
+        self.context.create_wrap_key(self.keyFlags, self.srk.get_handle())
 
 
-def get_new_key_and_replace_current(idx, context=None, first_run=False):
-    if context is None:
-        context = TspiContext()
-        context.connect()
-    take_ownership(context)
-    srk = getSrkKey(context)
 
-    if first_run == True:
-        k = context.create_wrap_key(keyFlags, srk.get_handle())
-        k.load_key()
-        k.registerKey(idxToUUID(idx), srk_uuid)
+    def get_current_key(self, idx):
+        self.__create_context()
+        k = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, self.__idxToUUID(idx))
         return k
-    else:
-        kOld = context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, idxToUUID(idx))
-        kNew = context.create_wrap_key(keyFlags, srk.get_handle())
-        kOld.unregisterKey()
-        kNew.registerKey(idxToUUID(idx), srk_uuid)
-        kNew.load_key()
-        return kNew
 
 
-'''
-#define TSS_TPMCAP_PROP_MAXNVAVAILABLE      (0x2d)
-#define TSS_TPMCAP_PROP_INPUTBUFFERSIZE     (0x2e)
-'''
+    def get_new_key_and_replace_current(self, idx, first_run=False):
+        self.__create_context()
+        if first_run == True:
+            k = self.context.create_wrap_key(self.keyFlags, self.srk.get_handle())
+            k.load_key()
+            k.registerKey(self.__idxToUUID(idx), self.srk_uuid)
+            return k
+        else:
+            kOld = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, self.__idxToUUID(idx))
+            kNew = self.context.create_wrap_key(self.keyFlags, self.srk.get_handle())
+            kOld.unregisterKey()
+            kNew.registerKey(self.__idxToUUID(idx), self.srk_uuid)
+            kNew.load_key()
+            return kNew
 
 
-def get_registered_keys(context=None):
-    if context is None:
-        context = TspiContext()
-        context.connect()
-    take_ownership(context)
-    keys = context.list_keys()
-    keys.remove(str(srk_uuid))
-    indexes = []
-    # print("ks:{}".format(keys))
-    for k in keys:
-        # cut away leading 0
-        indexes.append(str(int(k.split("-")[0])))
-    # print(indexes)
-    return indexes
+    def get_registered_keys(self):
+        keys = self.context.list_keys()
+        keys.remove(str(self.srk_uuid))
+        indexes = []
+        for k in keys:
+            # cut away leading 0
+            indexes.append(str(int(k.split("-")[0])))
+        return indexes
 
 
-def is_key_registered_to_idx(idx):
-    return str(idx) in get_registered_keys()
-
-
-def demo():
-    print("Hi from Python-TPM interface!")
-    print("establishing connection to TPM")
-    context = TspiContext()
-    context.connect()
-    take_ownership(context)
-    srk = getSrkKey(context)
-    print("connected/logged in to TPM")
-    mk = getMasterkeyNumberArray()
-    print("master key={}".format(str(mk)))
-    # clearKeys(context)
-
-    print("currently registered key uuids: " + str(get_registered_keys(context)))
-    idx = "1"
-    if (idx in get_registered_keys(context)):
-        print("removed registered key with idx " + str(idx))
-        k = get_current_key(idx, context)
-        k.unregisterKey()
-        print("currently registered key uuids: " + str(get_registered_keys(context)))
-
-    print("generating/storing deletable key with idx=" + str(1))
-    dk = get_new_key_and_replace_current(idx, context, first_run=True)
-    print("deleteable key:\ndk={}".format(binascii.hexlify(dk.get_keyblob())))
-    encry = dk.bind(mk)
-    print("encrypted master key:\nmk={}".format(binascii.hexlify(encry)))
-    print("unencrypted master key={}".format(dk.unbind(encry)))
-    print("Got a secure delete request! Key-Cascade rebuilt, generatink new mk")
-    mkk = getMasterkeyNumberArrayOne()
-    print("new master key={}".format(mkk))
-    print("exchanging dk")
-    dkk = get_new_key_and_replace_current(idx, context, first_run=False)
-    print("new deletable key:\ndk={}".format(binascii.hexlify(dkk.get_keyblob())))
-    encry = dkk.bind(mkk)
-    print("new encrypted masterkey:\nmk={}".format(binascii.hexlify(encry)))
-    print("new unencrypted mk={}".format(dkk.unbind(encry)))
-    print("Done!")
+    def is_key_registered_to_idx(self, idx):
+        return str(idx) in self.get_registered_keys()
 
 
 
+    def get_status(self):
+        try:
+            return self.__get_status()
+        except:
+            return "TPM not available"
 
-    # keyslots = tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY,[tss_lib.TSS_TPMCAP_PROP_SLOTS])
-    # keyslots = tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY,[tss_lib.TSS_TPMCAP_PROP_MAXNVAVAILABLE])
-    # keyslots = tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY,[tss_lib.TSS_TPMCAP_PROP_INPUTBUFFERSIZE])
-    # keyslots = tpm.get_capability(tss_lib.TSS_TPMCAP_NV_LIST,[tss_lib.TSS_TPMCAP_PROP_SLOTS])
+
+    def __get_status(self):
+        tpm = self.context.get_tpm_object()
+        tpmpolicy = tpm.get_policy_object(TSS_POLICY_USAGE)
+        tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.ownerSecret)
+
+        versionInfo = binascii.b2a_qp(tpm.get_capability(tss_lib.TSS_TPMCAP_VERSION_VAL, 0)).decode("ascii").split("=")
+        chipVer = ".".join(versionInfo[2:7])
+        specLvl = versionInfo[7]
+        vendor = versionInfo[8]
+        statusStr = ""
+        statusStr += (
+            "ChipVersion={}, \nSpecLevel={}, \nSpecRevision={}, \nVendor={}".format(chipVer, specLvl, vendor[0:2], vendor[2:]))
+
+        tpmver = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_VERSION, 0)).decode("ascii")
 
 
-# [tss_lib.TSS_TPMCAP_PROP_SLOTS])
-# print("slots: {}".format(keyslots))
-# print("blaa:"+struct.unpack(keyslots))
-# clearKeys()
-#demo()
-'''
-k=get_current_key()
-k2=get_new_key_and_replace_current()
-k3=get_new_key_and_replace_current()
-'''
-'''
-MKencrypted=True
-if not os.path.isfile(masterKeyFilePath):
-    MKencrypted=False
+        manufactInfo = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROP_MANUFACTURER, tss_lib.TSS_TCSCAP_PROP_MANUFACTURER_STR)).decode(
+            "ascii")
 
-if MKencrypted:
-    #exchange keys: assumption old_uuid key exists, new_uuid key does not exist. oldkey encrypted masterkeyFile
-    kOld=context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM,old_uuid)
-    kNew=context.create_wrap_key(keyFlags,srk.get_handle())
-    with open(masterKeyFilePath, 'rb+') as f:
-        encryptedData = bytearray(f.read())
-        f.seek(0)
-        #print("data: "+kOld.unbind(encryptedData))
-        kNew.registerKey(new_uuid,srk_uuid)
-        f.write(kNew.bind(kOld.unbind(encryptedData)))
-        f.truncate()
-    kOld.unregisterKey()
-    kNew.registerKey(old_uuid,srk_uuid)
-    kNew.unregisterKey(new_uuid)
-    #kNew.loadkey if you want to use it further
-else:
-    #encrypt and save
-    k=context.create_wrap_key(keyFlags,srk.get_handle())
-    k.load_key()
-    k.registerKey(old_uuid,srk_uuid)
-    with open(masterKeyFilePath, 'wb') as f:
-        f.write(k.bind(getMasterkeyNumberArray()))
-'''
+
+        statusStr += (", \nTPMVer={}, \nManufacturInfo={}".format(tpmver, manufactInfo))
+
+
+        maxkeyslots = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_SLOTS)).decode("ascii")
+        maxKeys = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXKEYS)).decode(
+            "ascii")
+        maxSess = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXSESSIONS)).decode("ascii")
+        maxContexts = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXCONTEXTS)).decode("ascii")
+        maxInputBuffer = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_INPUTBUFFERSIZE)).decode("ascii")
+        maxNVavail = binascii.hexlify(
+            tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXNVAVAILABLE)).decode("ascii")
+        statusStr += (
+            ", \nKeySlots={}, \nMaxKeys={}, \nMaxSess={}, \nMaxContexts={}, \nInputBufferSize={}, \nMaxNVSpace={}".format(maxkeyslots,
+                                                                                                        maxKeys,
+                                                                                                        maxSess,
+                                                                                                        maxContexts,
+                                                                                                        maxInputBuffer,
+                                                                                                        maxNVavail))
+
+        # nvIndices=binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_NV_LIST,0)).decode("ascii")
+        algsrsa = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_RSA)).decode("ascii")
+        algsdes = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_DES)).decode("ascii")
+        algs3des = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_3DES)).decode("ascii")
+        algssha = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_SHA)).decode("ascii")
+        # algssha256=binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG,tss_lib.TSS_ALG_SHA256)).decode("ascii")
+        algshmac = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_HMAC)).decode("ascii")
+        algsaes128 = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_AES128)).decode("ascii")
+        algsmgf1 = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_MGF1)).decode("ascii")
+        algsaes192 = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_AES192)).decode("ascii")
+        algsaes256 = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_AES256)).decode("ascii")
+        algsxor = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_XOR)).decode("ascii")
+        algsaes = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_AES)).decode("ascii")
+        statusStr += (
+            ", \nRSA={}, \nDES={}, \n3DES={}, \nSHA-1={}, \nHMAC={}, \nAES128={}, \nMGF1={}, \nAES192={}, \nAES256={}, \nXOR={}, \nAES={}".format(algsrsa,
+                                                                                                                 algsdes,
+                                                                                                                 algs3des,
+                                                                                                                 algssha,
+                                                                                                                 algshmac,
+                                                                                                                 algsaes128,
+                                                                                                                 algsmgf1,
+                                                                                                                 algsaes192,
+                                                                                                                 algsaes256,
+                                                                                                                 algsxor,
+                                                                                                                 algsaes))
+        flags = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_FLAG, 0)).decode("ascii")
+        statusStr += (", \nFlags={}".format(flags))
+        statusStr += ", \nRegisteredKeys={}".format(self.get_registered_keys())
+        return statusStr

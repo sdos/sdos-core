@@ -23,6 +23,7 @@ import logging
 from flask import Response
 
 from mcm.sdos.service.Exceptions import HttpError
+from mcm.sdos.util.tpmLib import TpmLib
 
 PSEUDO_CONTAINER_NAME = "__mcm-pseudo-container__"
 PASSPHRASEFIELD = 'x-object-meta-passphrase'
@@ -48,15 +49,13 @@ def dispatch(thisObject, data = None):
         # TPM integration
         ###############################################################################
         if is_operation("tpm_status"):
-            return Response(response="lalalalalala", status=200,
+            return Response(response=TpmLib().get_status(), status=200,
                             mimetype="text/plain")
         elif is_operation("tpm_unlock"):
-            print("unlock tpm", extract_passphrase(data))
-            return Response(response="", status=200,
+            return Response(response=TpmLib().unlock(extract_passphrase(data)), status=200,
                             mimetype="text/plain")
         elif is_operation("tpm_lock"):
-            print("lock tpm")
-            return Response(response="", status=200,
+            return Response(response=TpmLib().lock(), status=200,
                             mimetype="text/plain")
         ###############################################################################
         # unknown
