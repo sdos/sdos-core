@@ -32,6 +32,7 @@ from mcm.sdos.service.Exceptions import HttpError
 from mcm.sdos.service import httpBackend, app, pseudoObjects, pseudoContainer
 from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.parallelExecution.Pool import SwiftPool, FEPool
+from mcm.sdos.swift.SwiftBackend import SwiftBackend
 
 log = logging.getLogger()
 
@@ -306,20 +307,35 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
     if (s == 204 and sdos_frontend):
-        sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
+        sdos_frontend.deleteObject(thisObject)
     return Response(response=b, status=s, headers=h)
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT", "POST"])
 @log_requests
 def handle_object_put(thisAuth, thisContainer, thisObject):
+    """
+    upload/update object; C/U (from CRUD) operations
+    we explicitly check the validity of the request
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
+    for pseudo object/pseudo container requests because this otherwise doesn't happen,
+    or happens too late; i.e. after KeyCascade objects were modified. In case of uploads we verify AFTER
+    K.C. operations because the client can just upload the same object again and the "wrongly" assigned key/slot will be re-used
+    :param thisAuth:
+    :param thisContainer:
+    :param thisObject:
+    :return:
+    """
+    thisToken = get_token(request)
     if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
         return pseudoContainer.dispatch(thisObject=thisObject, data=request.headers)
 
     myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
-    sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+    sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=thisToken)
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
         return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.headers)
 
     if (sdos_frontend and len(request.data)):

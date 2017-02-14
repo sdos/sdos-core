@@ -158,7 +158,7 @@ class SdosFrontend(object):
         c = self.si.getObject(container=self.containerName, name=name)
         return self.decrypt_object(c, name)
 
-    def deleteObject(self, name, deleteDataObjectInSwift=True):
+    def deleteObject(self, name):
         """
         delete an individual object. this triggers the secure delete / re-keying on the cascade
         unless batch delete is activated, then the frontend will save deletions to a log and
@@ -172,8 +172,6 @@ class SdosFrontend(object):
             logging.info("new batch delete log entry: {}".format(name))
         else:
             self.cascade.secureDeleteObjectKey(name)
-        if deleteDataObjectInSwift:
-            self.si.deleteObject(container=self.containerName, name=name)
 
     def batch_delete_start(self):
         """
