@@ -1,5 +1,6 @@
 import binascii
 import uuid
+import subprocess
 
 from mcm.sdos.crypto.CryptoLib import getSha1Bytes
 from pytss import *
@@ -33,6 +34,11 @@ class TpmLib(Borg):
     def unlock(self, srk_password_string):
         self.srkSecret = getSha1Bytes(str(srk_password_string).encode("UTF-8"))
         self.__create_context()
+        try:
+            self.probe_tpm_function()
+        except pytss.tspi_exceptions.TPM_E_DEFEND_LOCK_RUNNING:
+            raise SystemError("TPM is defending against dictionary attacks and is in some time-out period")
+
 
 
     def lock(self):
@@ -41,19 +47,19 @@ class TpmLib(Borg):
 
 
     def __create_context(self):
+        try:
+            self.srkSecret
+        except AttributeError:
+            raise KeyError("SRK not provided yet")
         self.context = TspiContext()
         self.context.connect()
-        self.srk = self.__getSrkKey()
+        self.srk = self.context.load_key_by_uuid(TSS_PS_TYPE_SYSTEM, self.srk_uuid)
+        srkpolicy = self.srk.get_policy_object(TSS_POLICY_USAGE)
+        srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.srkSecret)
+
 
     def __idxToUUID(self, idx):
         return uuid.UUID('{' + str(idx).zfill(8) + '-0000-0000-0000-000000000002}')
-
-
-    def __getSrkKey(self):
-        srk = self.context.load_key_by_uuid(TSS_PS_TYPE_SYSTEM, self.srk_uuid)
-        srkpolicy = srk.get_policy_object(TSS_POLICY_USAGE)
-        srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.srkSecret)
-        return srk
 
 
 
@@ -109,37 +115,53 @@ class TpmLib(Borg):
         return str(idx) in self.get_registered_keys()
 
 
+    def set_new_srk(self):
+        srkSecret = getSha1Bytes("hallo".encode("UTF-8"))
+        context = TspiContext()
+        context.connect()
+        srk = context.create_rsa_key(TSS_KEY_TSP_SRK | TSS_KEY_AUTHORIZATION)
+        srkpolicy = srk.get_policy_object(TSS_POLICY_USAGE)
+        srkpolicy.set_secret(TSS_SECRET_MODE_SHA1, srkSecret)
+
+
+
+
+
+###############################################################################
+###############################################################################
+# Status and version info
+###############################################################################
+###############################################################################
+
+    def __get_version(self):
+        s=subprocess.run("tpm_version", stdout=subprocess.PIPE)
+        return s.stdout.decode()
+
+
+
 
     def get_status(self):
+        s = self.__get_version()
+        s += "\n\n"
         try:
-            return self.__get_status()
-        except:
-            return "TPM not available"
+            self.probe_tpm_function()
+            s += self.__get_status()
+        except pytss.tspi_exceptions.TPM_E_DEFEND_LOCK_RUNNING:
+            s += "TPM is defending against dictionary attacks and is in some time-out period"
+        except KeyError:
+            s += "TPM is locked, enter Storage Root Key (SRK)"
+        except pytss.tspi_exceptions.TPM_E_AUTHFAIL:
+            s += "TPM authentication failed. Possible wrong Storage Root Key (SRK)"
+
+        return s
 
 
     def __get_status(self):
         tpm = self.context.get_tpm_object()
         tpmpolicy = tpm.get_policy_object(TSS_POLICY_USAGE)
-        tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.ownerSecret)
+        tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.srkSecret)
 
-        versionInfo = binascii.b2a_qp(tpm.get_capability(tss_lib.TSS_TPMCAP_VERSION_VAL, 0)).decode("ascii").split("=")
-        chipVer = ".".join(versionInfo[2:7])
-        specLvl = versionInfo[7]
-        vendor = versionInfo[8]
         statusStr = ""
-        statusStr += (
-            "ChipVersion={}, \nSpecLevel={}, \nSpecRevision={}, \nVendor={}".format(chipVer, specLvl, vendor[0:2], vendor[2:]))
-
-        tpmver = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_VERSION, 0)).decode("ascii")
-
-
-        manufactInfo = binascii.hexlify(
-            tpm.get_capability(tss_lib.TSS_TPMCAP_PROP_MANUFACTURER, tss_lib.TSS_TCSCAP_PROP_MANUFACTURER_STR)).decode(
-            "ascii")
-
-
-        statusStr += (", \nTPMVer={}, \nManufacturInfo={}".format(tpmver, manufactInfo))
-
 
         maxkeyslots = binascii.hexlify(
             tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_SLOTS)).decode("ascii")
@@ -154,7 +176,7 @@ class TpmLib(Borg):
         maxNVavail = binascii.hexlify(
             tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXNVAVAILABLE)).decode("ascii")
         statusStr += (
-            ", \nKeySlots={}, \nMaxKeys={}, \nMaxSess={}, \nMaxContexts={}, \nInputBufferSize={}, \nMaxNVSpace={}".format(maxkeyslots,
+            "KeySlots={}, \nMaxKeys={}, \nMaxSess={}, \nMaxContexts={}, \nInputBufferSize={}, \nMaxNVSpace={}".format(maxkeyslots,
                                                                                                         maxKeys,
                                                                                                         maxSess,
                                                                                                         maxContexts,
