@@ -49,14 +49,13 @@ class Cascade(object):
     """
 
     def __init__(self, partitionStore, keySlotMapper, masterKeySource, cascadeProperties):
-        logging.warning("Init new")
         self.log = logging.getLogger(__name__)
         self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
         self.cascade_lock = Lock()
-        self.log.info(
+        logging.warning(
             "Initialized new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
 
@@ -221,7 +220,7 @@ class Cascade(object):
             self.__storePartition(partition, partitionKey)
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
-        #elif key and createIfNotExists:
+            # elif key and createIfNotExists:
             # If the partition did exist and also had the key, we need to manually release the a-priori lock.
             # In all other cases, the partition was saved above which unlocks implicitly
         #    self.partitionStore.unlockPartition(partitionId)

@@ -83,10 +83,7 @@ class FEPool(Borg):
         self.__lock.acquire()
         logging.debug("Lock || locked")
         try:
-            p = self.__pool[(container, swiftTenant)]
-            self.__lock.release()
-            logging.debug("Lock /\ release found FE")
-            return p
+            return self.__pool[(container, swiftTenant)]
         except KeyError:
             logging.info(
                 "Frontend not found in pool, creating new for: container {}, swiftTenant {}, swiftToken {}".format(
@@ -101,6 +98,7 @@ class FEPool(Borg):
                                                   master_key_type=props[3], use_batch_delete=props[4])
             fe = Frontend.SdosFrontend(container, swiftBackend=sb, cascadeProperties=cascadeProperties, useCache=True)
             self.addFE(container, swiftTenant, swiftToken, fe)
-            self.__lock.release()
-            logging.debug("Lock /\ release CREATED  NEW FE")
             return fe
+        finally:
+            self.__lock.release()
+            logging.debug("Lock /\ release CREATED NEW FE (probably...)")

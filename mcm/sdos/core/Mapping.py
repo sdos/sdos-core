@@ -53,7 +53,7 @@ class KeySlotMapper(object):
     def __watch_and_store_mapping(self):
         self.log.debug("checking mapping consistency...")
         if not self.is_mapping_clean:
-            self.log.info("local mapping changed; flushing to store")
+            logging.warning("cached mapping changed in container {}; flushing {} entries to store".format(self.cascadeProperties.container_name, len(self.mapping)))
             self.storeMapping()
             self.is_mapping_clean = True
         threading.Timer(10, self.__watch_and_store_mapping).start()
@@ -104,9 +104,10 @@ class KeySlotMapper(object):
         by = io.BytesIO()
         by.write(self.cascadeProperties.BYTES_FOR_SLOT_IDS.to_bytes(length=1, byteorder='little', signed=False))
         for k, v in self.mapping.items():
+            k_enc = k.encode(encoding='utf_8', errors='strict')
             by.write(
-                len(k).to_bytes(length=self.cascadeProperties.BYTES_FOR_NAME_LENGTH, byteorder='little', signed=False))
-            by.write(k.encode(encoding='utf_8', errors='strict'))
+                len(k_enc).to_bytes(length=self.cascadeProperties.BYTES_FOR_NAME_LENGTH, byteorder='little', signed=False))
+            by.write(k_enc)
             by.write(v.to_bytes(length=self.cascadeProperties.BYTES_FOR_SLOT_IDS, byteorder='little', signed=False))
         by.seek(0)
         return by
@@ -129,15 +130,19 @@ class KeySlotMapper(object):
         by.close()
 
     def storeMapping(self):
-        self.log.info("flushing modified mapping from cache. Size: {}".format(len(self.mapping)))
         self.mappingStore.writeMapping(self.serializeToBytesIO())
+        self.log.info("flushed modified mapping from cache. Size: {}".format(len(self.mapping)))
 
     def readMapping(self):
-        by = self.mappingStore.readMapping()
-        if by:
-            self.log.info("retrieved stored mapping")
-            self.deserializeFromBytesIO(by)
-            self.__populateUsedList()
-            self.is_mapping_clean = True
-        else:
-            self.log.error('retrieved no stored mapping. starting empty...')
+        try:
+            by = self.mappingStore.readMapping()
+            if by:
+                self.log.info("retrieved stored mapping")
+                self.deserializeFromBytesIO(by)
+                self.__populateUsedList()
+                self.is_mapping_clean = True
+            else:
+                self.log.error('retrieved no stored mapping. starting empty...')
+        except Exception as e:
+            raise SystemError("failed to read mapping - {}".format(e))
+

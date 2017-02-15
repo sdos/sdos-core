@@ -259,7 +259,7 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 # tpm key source
 # use a tpm key as deletable key. the master key will be encrypted with a different
-# password each time.
+# tpm-bound, non-migratable key inside the TPM
 ###############################################################################
 ###############################################################################
 class MasterKeyTPM(object):
@@ -270,7 +270,7 @@ class MasterKeyTPM(object):
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
         #TODO or get key_id from cascadeProperties?
-        self.keyId = 13
+        self.keyId = 12
         self.tpm = TpmLib()
         try:
             self.unlock_key()
@@ -284,7 +284,6 @@ class MasterKeyTPM(object):
     def get_current_key(self):
         if not self.plainMasterKey:
             raise KeyError("Master key is not available")
-        print("---", self.plainMasterKey, "---")
         return self.plainMasterKey
 
     def get_new_key_and_replace_current(self, first_run=False):
