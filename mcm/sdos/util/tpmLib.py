@@ -1,6 +1,7 @@
 import binascii
 import uuid
 import subprocess
+import logging
 
 from mcm.sdos.crypto.CryptoLib import getSha1Bytes
 from pytss import *
@@ -10,20 +11,17 @@ from mcm.sdos.parallelExecution import Borg
 class TpmLib(Borg):
     srk_uuid = uuid.UUID('{00000000-0000-0000-0000-000000000001}')
     keyFlags = TSS_KEY_TYPE_BIND | TSS_KEY_SIZE_2048 | TSS_KEY_NO_AUTHORIZATION | TSS_KEY_NOT_MIGRATABLE
-    #srkSecret = getSha1Bytes("ot6do5dFj2anjVZKDtHsy4s".encode("UTF-8"))
-    ownerSecret = getSha1Bytes("tYb6cBk7ytmzzGTo5ehxaih".encode("UTF-8"))
+    #srkSecret = getSha1Bytes("hallo".encode("UTF-8"))
+    ownerSecret = getSha1Bytes("hi".encode("UTF-8"))
 
     def __init__(self):
         Borg.__init__(self)
 
-        print("TPMlib init")
+        logging.info("TPMlib init")
         try:
             self.context
         except:
-            self.context = None
-            self.srk = None
-        #self.unlock("ot6do5dFj2anjVZKDtHsy4s")
-
+            self.lock()
 
 
 
@@ -32,6 +30,7 @@ class TpmLib(Borg):
 
 
     def unlock(self, srk_password_string):
+        logging.warning("unlocking TPM with SRK >{}<".format(srk_password_string))
         self.srkSecret = getSha1Bytes(str(srk_password_string).encode("UTF-8"))
         self.__create_context()
         try:
@@ -44,12 +43,11 @@ class TpmLib(Borg):
     def lock(self):
         self.context = None
         self.srk = None
+        self.srkSecret = None
 
 
     def __create_context(self):
-        try:
-            self.srkSecret
-        except AttributeError:
+        if not self.srkSecret:
             raise KeyError("SRK not provided yet")
         self.context = TspiContext()
         self.context.connect()
@@ -80,23 +78,27 @@ class TpmLib(Borg):
 
 
     def get_current_key(self, idx):
+        key_uuid = self.__idxToUUID(idx)
+        logging.warning("retrieving key {} from TPM".format(key_uuid))
         self.__create_context()
-        k = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, self.__idxToUUID(idx))
+        k = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, key_uuid)
         return k
 
 
     def get_new_key_and_replace_current(self, idx, first_run=False):
+        key_uuid = self.__idxToUUID(idx)
+        logging.warning("replacing current key {} in TPM. createIfNotExists={}".format(key_uuid, first_run))
         self.__create_context()
-        if first_run == True:
+        if first_run:
             k = self.context.create_wrap_key(self.keyFlags, self.srk.get_handle())
             k.load_key()
-            k.registerKey(self.__idxToUUID(idx), self.srk_uuid)
+            k.registerKey(key_uuid, self.srk_uuid)
             return k
         else:
-            kOld = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, self.__idxToUUID(idx))
+            kOld = self.context.load_key_by_uuid(tss_lib.TSS_PS_TYPE_SYSTEM, key_uuid)
             kNew = self.context.create_wrap_key(self.keyFlags, self.srk.get_handle())
             kOld.unregisterKey()
-            kNew.registerKey(self.__idxToUUID(idx), self.srk_uuid)
+            kNew.registerKey(key_uuid, self.srk_uuid)
             kNew.load_key()
             return kNew
 
@@ -159,7 +161,7 @@ class TpmLib(Borg):
     def __get_status(self):
         tpm = self.context.get_tpm_object()
         tpmpolicy = tpm.get_policy_object(TSS_POLICY_USAGE)
-        tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.srkSecret)
+        tpmpolicy.set_secret(TSS_SECRET_MODE_SHA1, self.ownerSecret)
 
         statusStr = ""
 
