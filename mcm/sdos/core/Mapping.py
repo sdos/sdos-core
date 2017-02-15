@@ -42,7 +42,6 @@ class KeySlotMapper(object):
         self.readMapping()
         self.__watch_and_store_mapping()
 
-
     def __populateUsedList(self):
         for t in self.mapping.values():
             self.usedList.add(t)
@@ -53,9 +52,16 @@ class KeySlotMapper(object):
     def __watch_and_store_mapping(self):
         self.log.debug("checking mapping consistency...")
         if not self.is_mapping_clean:
-            logging.warning("cached mapping changed in container {}; flushing {} entries to store".format(self.cascadeProperties.container_name, len(self.mapping)))
-            self.storeMapping()
+            # we use a copy so that the original can still be used for writing while we persist the copy
+            m = self.mapping.copy()
             self.is_mapping_clean = True
+            logging.warning("cached mapping changed in container {}; flushing {} entries to store".format(
+                self.cascadeProperties.container_name, len(m)))
+            try:
+                self.storeMapping(mapping_dict=m)
+            except:
+                self.is_mapping_clean = False
+                logging.exception("error storing mapping")
         threading.Timer(10, self.__watch_and_store_mapping).start()
 
     def getMappingDict(self):
@@ -99,14 +105,15 @@ class KeySlotMapper(object):
     ###############################################################################
     ###############################################################################
 
-    def serializeToBytesIO(self):
+    def serializeToBytesIO(self, mapping_dict):
         # format: <len(ids)><len(name)><name><id>...<len(name)><name><id>...
         by = io.BytesIO()
         by.write(self.cascadeProperties.BYTES_FOR_SLOT_IDS.to_bytes(length=1, byteorder='little', signed=False))
-        for k, v in self.mapping.items():
+        for k, v in mapping_dict.items():
             k_enc = k.encode(encoding='utf_8', errors='strict')
             by.write(
-                len(k_enc).to_bytes(length=self.cascadeProperties.BYTES_FOR_NAME_LENGTH, byteorder='little', signed=False))
+                len(k_enc).to_bytes(length=self.cascadeProperties.BYTES_FOR_NAME_LENGTH, byteorder='little',
+                                    signed=False))
             by.write(k_enc)
             by.write(v.to_bytes(length=self.cascadeProperties.BYTES_FOR_SLOT_IDS, byteorder='little', signed=False))
         by.seek(0)
@@ -129,8 +136,8 @@ class KeySlotMapper(object):
 
         by.close()
 
-    def storeMapping(self):
-        self.mappingStore.writeMapping(self.serializeToBytesIO())
+    def storeMapping(self, mapping_dict):
+        self.mappingStore.writeMapping(self.serializeToBytesIO(mapping_dict=mapping_dict))
         self.log.info("flushed modified mapping from cache. Size: {}".format(len(self.mapping)))
 
     def readMapping(self):
@@ -145,4 +152,3 @@ class KeySlotMapper(object):
                 self.log.error('retrieved no stored mapping. starting empty...')
         except Exception as e:
             raise SystemError("failed to read mapping - {}".format(e))
-
