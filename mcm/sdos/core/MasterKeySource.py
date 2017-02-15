@@ -269,8 +269,7 @@ class MasterKeyTPM(object):
         self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
-        #TODO or get key_id from cascadeProperties?
-        self.keyId = 12
+        self.keyId = self.cascadeProperties.tpm_key_id
         self.tpm = TpmLib()
         try:
             self.unlock_key()
