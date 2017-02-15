@@ -12,8 +12,8 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
 import io
+import logging
 import threading
 
 
@@ -55,8 +55,8 @@ class KeySlotMapper(object):
             # we use a copy so that the original can still be used for writing while we persist the copy
             m = self.mapping.copy()
             self.is_mapping_clean = True
-            logging.warning("cached mapping changed in container {}; flushing {} entries to store".format(
-                self.cascadeProperties.container_name, len(m)))
+            logging.warning("flushing modified mapping with {} entries to mgmt container {}".format(
+                len(m), self.cascadeProperties.container_name_mgmt))
             try:
                 self.storeMapping(mapping_dict=m)
             except:
@@ -76,7 +76,6 @@ class KeySlotMapper(object):
         for slot in range(self.cascadeProperties.FIRST_OBJECT_KEY_SLOT, self.cascadeProperties.LAST_OBJCT_KEY_SLOT + 1):
             if slot not in self.usedList:
                 return slot
-
         raise SystemError('no more free key slots available')
 
     def setMapping(self, name, slot):

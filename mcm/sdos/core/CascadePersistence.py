@@ -12,9 +12,9 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging
 import io
-from mcm.sdos import configuration
+import logging
+
 from swiftclient import ClientException
 
 CASCADE_FILE_PATH = '/tmp/sdos'
@@ -24,7 +24,7 @@ class MemoryBackedPartitionStore(object):
     """
     implements a partition store
     """
-
+    containerNameSdosMgmt = None
     def __init__(self):
         """
         Constructor
@@ -59,7 +59,7 @@ class LocalFilePartitionStore(object):
     """
     implements a partition store backed by a local file
     """
-
+    containerNameSdosMgmt = None
     def __init__(self):
         """
         Constructor

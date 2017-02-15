@@ -15,7 +15,6 @@
 import io
 import logging
 import threading
-from threading import Lock
 
 
 class KeyPartitionCache(object):
@@ -34,7 +33,7 @@ class KeyPartitionCache(object):
         self.__dirty_partitions = set()
         # partition-level locking is not useful since all methods end up locking/waiting for part. 0 anyway...
         # cascade-level locking is now used
-        #self.__locks = dict()
+        # self.__locks = dict()
         self.__watch_and_store_partitions()
 
     def writePartition(self, partitionId, by):
@@ -47,7 +46,7 @@ class KeyPartitionCache(object):
         logging.debug("writing partition to cache: {}".format(partitionId))
         self.partitionCache[partitionId] = by.getbuffer()
         self.__dirty_partitions.add(partitionId)
-        #self.unlockPartition(partitionId)
+        # self.unlockPartition(partitionId)
 
     def readPartition(self, partitionId, lockForWriting=False):
         """
@@ -57,7 +56,7 @@ class KeyPartitionCache(object):
         :return:
         """
         logging.debug("reading partition from cache: {}".format(partitionId))
-        #if lockForWriting:
+        # if lockForWriting:
         #    self.lockPartition(partitionId)
 
         if partitionId in self.partitionCache:
@@ -78,7 +77,8 @@ class KeyPartitionCache(object):
         logging.debug("checking for dirty partitions in cache: {} found".format(len(self.__dirty_partitions)))
         while self.__dirty_partitions:
             pid = self.__dirty_partitions.pop()
-            logging.info("flushing modified partition from cache: {}".format(pid))
+            logging.warning("flushing modified partition {} from cache to mgmt container {}".format(pid,
+                                                                                                    self.partitionStore.containerNameSdosMgmt))
             try:
                 self.partitionStore.writePartition(pid, io.BytesIO(self.partitionCache[pid]))
             except Exception:
@@ -88,6 +88,8 @@ class KeyPartitionCache(object):
                         pid, len(self.__dirty_partitions)))
                 break
         threading.Timer(10, self.__watch_and_store_partitions).start()
+
+
 '''
     def lockPartition(self, partitionId):
         """
