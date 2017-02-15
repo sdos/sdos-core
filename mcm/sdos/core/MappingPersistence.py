@@ -34,7 +34,7 @@ class LocalFileMappingStore(object):
         Constructor
         """
         self.log = logging.getLogger(__name__)
-        self.outerHeader = 'SDOS_MAPP_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
+        self.outerHeader = 'SDOS_MAPP_V2\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
         self.fileName = CASCADE_FILE_PATH + '/mapping.sdos'
 
     def writeMapping(self, by):
