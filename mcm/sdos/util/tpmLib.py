@@ -155,8 +155,8 @@ class TpmLib(Borg):
     ###############################################################################
 
     def __get_version(self):
-        s = subprocess.run("tpm_version", stdout=subprocess.PIPE)
-        return s.stdout.decode()
+        s = subprocess.run("tpm_version", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return s.stdout.decode() + s.stderr.decode()
 
     def get_status(self):
         s = self.__get_version()
