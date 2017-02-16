@@ -31,7 +31,7 @@ class KeySlotMapper(object):
         the mapping dict stores all the used slots in the partitions
         the used/free lists are derived from this and don't get stored
         """
-        logging.warning("Init new")
+        logging.info("Init new")
         self.log = logging.getLogger(__name__)
         self.is_mapping_clean = True
         self.mapping = dict()

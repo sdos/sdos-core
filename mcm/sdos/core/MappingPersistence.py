@@ -65,7 +65,7 @@ class SwiftMappingStore(object):
     implements a mapping store backed by the swift object store
     """
 
-    def __init__(self, containerNameSdosMgmt, swiftBackend):
+    def __init__(self, containerNameSdosMgmt, swift_backend):
         """
         Constructor
         """
@@ -74,16 +74,16 @@ class SwiftMappingStore(object):
         self.objName = 'mapping.sdos'
 
         self.containerNameSdosMgmt = containerNameSdosMgmt
-        self.swiftBackend = swiftBackend
+        self.swift_backend = swift_backend
 
     def writeMapping(self, by):
         obj = self.outerHeader + by.getbuffer()
-        self.swiftBackend.putObject(container=self.containerNameSdosMgmt, name=self.objName, dataObject=obj)
+        self.swift_backend.putObject(container=self.containerNameSdosMgmt, name=self.objName, dataObject=obj)
         self.log.debug('wrote mapping {} to swift mgmt container {}'.format(self.objName, self.containerNameSdosMgmt))
 
     def readMapping(self):
         try:
-            obj = self.swiftBackend.getObject(container=self.containerNameSdosMgmt, name=self.objName)
+            obj = self.swift_backend.getObject(container=self.containerNameSdosMgmt, name=self.objName)
         except ClientException:
             self.log.debug('mapping obj was not found in swift')
             return None

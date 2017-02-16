@@ -63,6 +63,7 @@ class MasterKeyDummy(object):
 
     def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
+        self.swiftBackend = swiftBackend
         self.get_new_key_and_replace_current()
 
     ###############################################################################
