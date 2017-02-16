@@ -137,7 +137,7 @@ class SdosFrontend(object):
 
     def refresh_swift_backend(self, swift_backend_new):
         if self.swift_backend != swift_backend_new:
-            logging.warning(
+            logging.info(
                 "container: {} - replacing old swift backend {} with {}".format(self.containerName, self.swift_backend,
                                                                                 swift_backend_new))
             self.swift_backend = swift_backend_new
