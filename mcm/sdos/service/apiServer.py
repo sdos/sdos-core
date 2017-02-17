@@ -67,7 +67,8 @@ def replaceStorageUrl(swiftResponse):
     swiftUrl = swiftResponse['X-Storage-Url']
     if not swiftUrl.startswith(configuration.swift_store_url.format("")):
         raise HttpError("swift returned wrong storage URL")
-    swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
+    #swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
+    swiftAuthName = "CEPH"
     swiftResponse['X-Storage-Url'] = configuration.my_endpoint_store_url.format(swiftAuthName)
 
 
@@ -173,7 +174,7 @@ def handle_invalid_usage(e):
     return "{}".format(e), 500
 
 
-@app.route("/auth/v1.0", methods=["GET"])
+@app.route("/auth/1.0", methods=["GET"])
 @log_requests
 def handle_auth():
     """
