@@ -55,13 +55,22 @@ my_endpoint_store_url = "http://{}:{}/v1/AUTH_{}".format(my_endpoint_host, my_en
 
 # configure the swift connection
 
-swift_auth_host = os.getenv("SWIFT_AUTH_HOST", "129.69.209.131")
-swift_auth_port = os.getenv("SWIFT_AUTH_PORT", "5000")
+# docker CEPH
+swift_auth_host = os.getenv("SWIFT_AUTH_HOST", "172.18.0.2")
+swift_auth_port = os.getenv("SWIFT_AUTH_PORT", "80")
 
-swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
+# v2 keystone auth
+#swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
+# v1 swift/CEPH auth
+swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port)
 
 
-swift_store_host = os.getenv("SWIFT_STORE_HOST", "129.69.209.131")
-swift_store_port = os.getenv("SWIFT_STORE_PORT", "8080")
+# docker CEPH
+swift_store_host = os.getenv("SWIFT_STORE_HOST", "172.18.0.2")
+swift_store_port = os.getenv("SWIFT_STORE_PORT", "80")
+#enigma ssh tunnel
 
-swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
+# openstack Swift
+#swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
+# CEPH on port :80
+swift_store_url = "http://{}/swift/v1".format(swift_store_host)
