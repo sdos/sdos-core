@@ -61,8 +61,10 @@ swift_auth_port = os.getenv("SWIFT_AUTH_PORT", "8080")
 
 # v2 keystone auth
 #swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
-# v1 swift/CEPH auth
-swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port)
+# v1 CEPH auth
+#swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port)
+# v1 swift auth
+swift_auth_url = "http://{}:{}/auth/v1.0".format(swift_auth_host, swift_auth_port)
 
 
 # docker CEPH

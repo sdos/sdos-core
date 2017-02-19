@@ -67,8 +67,8 @@ def replaceStorageUrl(swiftResponse):
     swiftUrl = swiftResponse['X-Storage-Url']
     if not swiftUrl.startswith(configuration.swift_store_url.format("")):
         raise HttpError("swift returned wrong storage URL")
-    #swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
-    swiftAuthName = "mcmdemo"
+    swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
+    #swiftAuthName = "sdos" # TODO: change for ceph / swift
     swiftResponse['X-Storage-Url'] = configuration.my_endpoint_store_url.format(swiftAuthName)
 
 
