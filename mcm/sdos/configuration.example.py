@@ -73,6 +73,6 @@ swift_store_port = os.getenv("SWIFT_STORE_PORT", "8080")
 #enigma ssh tunnel
 
 # openstack Swift
-#swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
+swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
 # CEPH on port :80
-swift_store_url = "http://{}/swift/v1".format(swift_store_host)
+#swift_store_url = "http://{}/swift/v1".format(swift_store_host)
