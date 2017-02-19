@@ -56,8 +56,8 @@ my_endpoint_store_url = "http://{}:{}/v1/AUTH_{}".format(my_endpoint_host, my_en
 # configure the swift connection
 
 # docker CEPH
-swift_auth_host = os.getenv("SWIFT_AUTH_HOST", "172.18.0.22")
-swift_auth_port = os.getenv("SWIFT_AUTH_PORT", "80")
+swift_auth_host = os.getenv("SWIFT_AUTH_HOST", "localhost")
+swift_auth_port = os.getenv("SWIFT_AUTH_PORT", "8080")
 
 # v2 keystone auth
 #swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
@@ -66,8 +66,8 @@ swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port
 
 
 # docker CEPH
-swift_store_host = os.getenv("SWIFT_STORE_HOST", "172.18.0.22")
-swift_store_port = os.getenv("SWIFT_STORE_PORT", "80")
+swift_store_host = os.getenv("SWIFT_STORE_HOST", "localhost")
+swift_store_port = os.getenv("SWIFT_STORE_PORT", "8080")
 #enigma ssh tunnel
 
 # openstack Swift
