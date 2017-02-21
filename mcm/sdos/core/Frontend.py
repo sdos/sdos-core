@@ -28,6 +28,7 @@ from mcm.sdos.crypto import CryptoLib
 from mcm.sdos.core.KeyCascade import Cascade
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
 from sdos.core import MasterKeySource
+from sdos.core.CascadeProperties import CascadeProperties
 from sdos.core.KeyPartitionCache import KeyPartitionCache
 
 
@@ -125,7 +126,7 @@ class SdosFrontend(object):
             swiftBackend=self.swift_backend)
 
         self.keySource = MasterKeySource.masterKeySourceFactory(cascadeProperties=cascadeProperties,
-                                                           swiftBackend=self.swift_backend)
+                                                                swiftBackend=self.swift_backend)
 
         if useCache:
             p = KeyPartitionCache(partitionStore=self.partitionStore)
@@ -201,5 +202,26 @@ class SdosFrontend(object):
             self.batch_delete_log.update(this_batch)
             raise SystemError("Batch log was restored. {}".format(e))
 
+
 ###############################################################################
 ###############################################################################
+
+
+
+def frontendFactory(swift_backend, container_name):
+    p = swift_backend.get_sdos_properties(container_name)
+    # print(p)
+    if p["sdos_type"] == "sdos":
+        cascadeProperties = CascadeProperties(container_name=container_name,
+                                              partition_bits=p["sdospartitionbits"],
+                                              tree_height=p["sdosheight"],
+                                              master_key_type=p["sdosmasterkey"],
+                                              use_batch_delete=p["sdosbatchdelete"],
+                                              tpm_key_id=p["sdostpmkeyid"])
+
+        return SdosFrontend(container_name,
+                            swiftBackend=swift_backend,
+                            cascadeProperties=cascadeProperties,
+                            useCache=True)
+    else:
+        return None

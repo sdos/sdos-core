@@ -30,7 +30,7 @@ class CascadeProperties(object):
         	BYTES_FOR_NAME_LENGTH = 2  # allows names to be 65536 characters long
         """
         b = int(partition_bits)
-        h = int(tree_height)
+        h = int(tree_height) - 1 # internally we don't count the root
         self.__validate_properties(b, h)
 
         self.container_name = container_name

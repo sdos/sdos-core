@@ -18,10 +18,9 @@
 import logging
 from threading import Lock
 
-from mcm.sdos.core import Frontend
-from mcm.sdos.parallelExecution import Borg
-from mcm.sdos.swift import SwiftBackend
-from sdos.core.CascadeProperties import CascadeProperties
+from sdos.parallelExecution import Borg
+from sdos.swift import SwiftBackend
+from sdos.core import Frontend
 
 
 class SwiftPool(Borg):
@@ -94,14 +93,8 @@ class FEPool(Borg):
                     container, swiftTenant,
                     swiftToken))
 
-            props = swift_backend_current.get_sdos_properties(container)
-            # print(props)
-            h = props[2] - 1  # tree height is without root internally, but with root externally
-            cascadeProperties = CascadeProperties(container_name=container, partition_bits=props[1], tree_height=h,
-                                                  master_key_type=props[3], use_batch_delete=props[4],
-                                                  tpm_key_id=props[5])
-            fe = Frontend.SdosFrontend(container, swiftBackend=swift_backend_current,
-                                       cascadeProperties=cascadeProperties, useCache=True)
+            fe = Frontend.frontendFactory(swift_backend_current, container)
+
             self.addFE(container, swiftTenant, swiftToken, fe)
             return fe
         finally:

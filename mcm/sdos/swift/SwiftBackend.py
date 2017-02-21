@@ -102,10 +102,7 @@ class SwiftBackend(object):
             self.swiftC.put_container(container=container, headers={})
 
     def is_sdos_container(self, containerName):
-        self.log.debug('checking for SDOS flag presence on container: {}'.format(containerName))
-        self._assertConnection()
-        t = self.swiftC.head_container(containerName)
-        return t.get("x-container-meta-sdos", False) == "True"
+        return bool(self.get_sdos_properties(containerName)["sdos_type"])
 
     def get_sdos_properties(self, containerName):
         """
@@ -116,12 +113,20 @@ class SwiftBackend(object):
         self.log.debug('checking for SDOS properties on container: {}'.format(containerName))
         self._assertConnection()
         t = self.swiftC.head_container(containerName)
-        r = (
-            t.get("x-container-meta-sdos", False) == "True",
-            int(t.get("x-container-meta-sdospartitionbits", 0)),
-            int(t.get("x-container-meta-sdosheight", 0)),
-            t.get("x-container-meta-sdosmasterkey", 0),
-            t.get("x-container-meta-sdosbatchdelete", False) == "True",
-            int(t.get("x-container-meta-sdostpmkeyid", -1))
-        )
-        return r
+
+        if (t.get("x-container-meta-sdoskeycascade", False) == "True") or (
+                    t.get("x-container-meta-sdos", False) == "True"):
+            sdos_type = "sdos"
+        elif t.get("x-container-meta-sdosencryption", False) == "True":
+            sdos_type = "crypto"
+        else:
+            sdos_type = False
+
+        return {
+            "sdos_type": sdos_type,
+            "sdospartitionbits": int(t.get("x-container-meta-sdospartitionbits", 0)),
+            "sdosheight": int(t.get("x-container-meta-sdosheight", 0)),
+            "sdosmasterkey": t.get("x-container-meta-sdosmasterkey", 0),
+            "sdosbatchdelete": t.get("x-container-meta-sdosbatchdelete", False) == "True",
+            "sdostpmkeyid": int(t.get("x-container-meta-sdostpmkeyid", -1))
+        }
