@@ -17,6 +17,7 @@ import logging
 from swiftclient import ClientException
 from sdos.crypto import CryptoLib
 from sdos.crypto.DataCrypt import DataCrypt
+from mcm.sdos.util.tpmLib import TpmLib
 
 OUTERHEADER = 'SDOS_MKEY_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
 KEYOBJNAME = 'masterkey.sdos'
@@ -62,6 +63,7 @@ class MasterKeyDummy(object):
 
     def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
+        self.swiftBackend = swiftBackend
         self.get_new_key_and_replace_current()
 
     ###############################################################################
@@ -258,22 +260,22 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 # tpm key source
 # use a tpm key as deletable key. the master key will be encrypted with a different
-# password each time.
+# tpm-bound, non-migratable key inside the TPM
 ###############################################################################
 ###############################################################################
 class MasterKeyTPM(object):
-    my_key_type = "TPM"
-    def __init__(self, cascadeProperties, swiftBackend,key_id=0):
+    my_key_type = "tpm"
+    def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
         self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
-        #TODO or get key_id from cascadeProperties?
-        self.keyId=key_id
+        self.keyId = self.cascadeProperties.tpm_key_id
+        self.tpm = TpmLib()
         try:
             self.unlock_key()
         except:
-            logging.error("unlocking master key failed for {}! Key source is not ready...".format(
+            logging.exception("unlocking master key failed for {}! Key source is not ready...".format(
                 self.containerNameSdosMgmt))
 
     ###############################################################################
@@ -290,13 +292,13 @@ class MasterKeyTPM(object):
         if not first_run and not self.plainMasterKey:
             raise KeyError("not allowed while current master is locked")
         new_master = CryptoLib.generateRandomKey()
-        self.plainMasterKey = new_master
-        k = tpm.get_new_key_and_replace_current(self.keyId)
-        wrapped_key = k.bind(new_master)
+        next_deletable = self.tpm.get_new_key_and_replace_current(self.keyId, first_run=first_run)
+        wrapped_key = io.BytesIO(next_deletable.bind(new_master))
         #TODO ADD key id to store_wrapped_key?
 
         store_wrapped_key(containerNameSdosMgmt=self.containerNameSdosMgmt, swiftBackend=self.swiftBackend,
                           wrapped_key=wrapped_key)
+        self.plainMasterKey = new_master
         return self.plainMasterKey
 
     ###############################################################################
@@ -306,7 +308,7 @@ class MasterKeyTPM(object):
         return {
             'type': self.my_key_type,
             'is_unlocked': bool(self.plainMasterKey),
-            'key_id': self.keyId,
+            'key_id': CryptoLib.getKeyAsId(self.plainMasterKey),
             'is_next_deletable_ready': True
         }
 
@@ -319,17 +321,17 @@ class MasterKeyTPM(object):
     def lock_key(self):
         self.plainMasterKey = None
 
-    def unlock_key(self):
-        logging.info("unlocking the master key from {}".format(self.containerNameSdosMgmt))
+    def unlock_key(self, passphrase=None):
+        logging.info("unlocking the TPM backed master key from {}".format(self.containerNameSdosMgmt))
         by = load_wrapped_key(containerNameSdosMgmt=self.containerNameSdosMgmt, swiftBackend=self.swiftBackend)
         if not by:
             logging.error("no wrapped key found in {}. Assuming first run, creating default key".format(
                 self.containerNameSdosMgmt))
-            self.get_new_key_and_replace_current(self.keyId,first_run=True)
+            self.get_new_key_and_replace_current(first_run=True)
             return
-        try:            
-            dc = tpm.get_current(self.keyId)
-            self.plainMasterKey = dc.unbind(by)
+        try:
+            deletable = self.tpm.get_current_key(self.keyId)
+            self.plainMasterKey = bytes(deletable.unbind(by.read()))
         except:
             raise KeyError("TPM Error. Failed decrypting master key")
 

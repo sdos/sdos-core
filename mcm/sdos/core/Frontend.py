@@ -107,31 +107,42 @@ class SdosFrontend(object):
         logging.warning(
             "initializing a new SDOS frontend: containerName={} useCache={}".format(containerName, useCache))
         self.containerName = containerName
-        self.si = swiftBackend
+        self.swift_backend = swiftBackend
         self.cascadeProperties = cascadeProperties
         self.batch_delete_log = set()
 
         # mappingStore = MappingPersistence.LocalFileMappingStore()
-        mappingStore = MappingPersistence.SwiftMappingStore(
+        self.mappingStore = MappingPersistence.SwiftMappingStore(
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
-            swiftBackend=self.si)
-        keySlotMapper = Mapping.KeySlotMapper(mappingStore=mappingStore, cascadeProperties=self.cascadeProperties)
+            swift_backend=self.swift_backend)
+
+        self.keySlotMapper = Mapping.KeySlotMapper(mappingStore=self.mappingStore,
+                                                   cascadeProperties=self.cascadeProperties)
 
         # partitionStore = CascadePersistence.LocalFilePartitionStore()
-        partitionStore = CascadePersistence.SwiftPartitionStore(
+        self.partitionStore = CascadePersistence.SwiftPartitionStore(
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
-            swiftBackend=self.si)
+            swiftBackend=self.swift_backend)
 
-        keySource = MasterKeySource.masterKeySourceFactory(cascadeProperties=cascadeProperties,
-                                                           swiftBackend=swiftBackend)
+        self.keySource = MasterKeySource.masterKeySourceFactory(cascadeProperties=cascadeProperties,
+                                                           swiftBackend=self.swift_backend)
 
         if useCache:
-            p = KeyPartitionCache(partitionStore=partitionStore)
+            p = KeyPartitionCache(partitionStore=self.partitionStore)
         else:
-            p = partitionStore
+            p = self.partitionStore
 
-        self.cascade = Cascade(partitionStore=p, keySlotMapper=keySlotMapper, masterKeySource=keySource,
+        self.cascade = Cascade(partitionStore=p, keySlotMapper=self.keySlotMapper, masterKeySource=self.keySource,
                                cascadeProperties=self.cascadeProperties)
+
+    def refresh_swift_backend(self, swift_backend_new):
+        if self.swift_backend != swift_backend_new:
+            logging.info(
+                "container: {} - replacing old swift backend {} with {}".format(self.containerName, self.swift_backend,
+                                                                                swift_backend_new))
+            self.swift_backend = swift_backend_new
+            self.mappingStore.swift_backend = swift_backend_new
+            self.keySource.swiftBackend = swift_backend_new
 
     def finish(self):
         self.cascade.finish()
@@ -145,7 +156,8 @@ class SdosFrontend(object):
 
     def putObject(self, o, name):
         c = self.encrypt_object(o=o, name=name)
-        self.si.putObject(self.containerName, name, c, headers={"X-Object-Meta-MCM-Content": DataCrypt.HEADER})
+        self.swift_backend.putObject(self.containerName, name, c,
+                                     headers={"X-Object-Meta-MCM-Content": DataCrypt.HEADER})
 
     def decrypt_object(self, c, name):
         key = self.cascade.getKeyForStoredObject(name)
@@ -155,10 +167,10 @@ class SdosFrontend(object):
         return self.decrypt_object(io.BytesIO(c), name).read()
 
     def getObject(self, name):
-        c = self.si.getObject(container=self.containerName, name=name)
+        c = self.swift_backend.getObject(container=self.containerName, name=name)
         return self.decrypt_object(c, name)
 
-    def deleteObject(self, name, deleteDataObjectInSwift=True):
+    def deleteObject(self, name):
         """
         delete an individual object. this triggers the secure delete / re-keying on the cascade
         unless batch delete is activated, then the frontend will save deletions to a log and
@@ -172,8 +184,6 @@ class SdosFrontend(object):
             logging.info("new batch delete log entry: {}".format(name))
         else:
             self.cascade.secureDeleteObjectKey(name)
-        if deleteDataObjectInSwift:
-            self.si.deleteObject(container=self.containerName, name=name)
 
     def batch_delete_start(self):
         """
@@ -183,13 +193,13 @@ class SdosFrontend(object):
         """
         this_batch = self.batch_delete_log.copy()
         self.batch_delete_log.clear()
-        logging.warning("executing batch deletions on {}. Log has a length of {}".format(self.containerName, len(this_batch)))
+        logging.warning(
+            "executing batch deletions on {}. Log has a length of {}".format(self.containerName, len(this_batch)))
         try:
             self.cascade.secureDeleteObjectKeyBatch(names=this_batch)
         except Exception as e:
             self.batch_delete_log.update(this_batch)
             raise SystemError("Batch log was restored. {}".format(e))
-
 
 ###############################################################################
 ###############################################################################

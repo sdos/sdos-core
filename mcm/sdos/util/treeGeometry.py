@@ -20,15 +20,18 @@ import math
 ###############################################################################
 ###############################################################################
 
-def get_used_partitions_json(cascade):
+def sdos_used_partitions(cascade):
     return json.dumps(cascade.get_used_partitions())
 
 
-def get_partition_mapping_json(cascade):
+def sdos_partition_mapping(cascade):
     return json.dumps(cascade.get_reverse_object_key_partition_mapping())
 
+def sdos_batch_delete_log(sdos_frontend):
+    return json.dumps(list(sdos_frontend.batch_delete_log))
 
-def get_cascade_stats_json(sdos_frontend):
+
+def sdos_cascade_stats(sdos_frontend):
     mapper = sdos_frontend.cascade.keySlotMapper
     m = mapper.getMappingDict()
     return json.dumps({"numObjects": len(m),
@@ -107,7 +110,7 @@ def print_reverse_slot_mapping(cascade):
 
 
 
-def get_slot_utilization(cascade, NUMFIELDS=10000):
+def sdos_slot_utilization(cascade, NUMFIELDS=10000):
     """
     <p>Each number represents a block of "groupSize" key slots.
                 Numbers 0 through 9 indicate how many slots are used in that block; with 0 all slots are empty and with

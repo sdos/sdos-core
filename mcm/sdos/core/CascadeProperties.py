@@ -20,6 +20,7 @@ class CascadeProperties(object):
                  partition_bits=8,
                  tree_height=2,
                  master_key_type=None,
+                 tpm_key_id = None,
                  use_partition_cache=True,
                  use_batch_delete=False):
         """
@@ -38,6 +39,7 @@ class CascadeProperties(object):
         self.master_key_type = master_key_type
         self.use_partition_cache = use_partition_cache
         self.use_batch_delete = use_batch_delete
+        self.tpm_key_id = tpm_key_id
 
         self.PARTITION_BITS = b
         self.TREE_HEIGHT = h

@@ -14,7 +14,7 @@
 
 import logging
 from mcm.sdos.crypto.CryptoLib import CryptoLib
-HEADER = 'SDOS_ENCO_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')
+HEADER = 'SDOS_ENCO_V1____'.encode(encoding='utf_8', errors='strict') # should always be 16 bytes long
 
 class DataCrypt(object):
 	"""

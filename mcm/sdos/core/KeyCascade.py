@@ -49,14 +49,13 @@ class Cascade(object):
     """
 
     def __init__(self, partitionStore, keySlotMapper, masterKeySource, cascadeProperties):
-        logging.warning("Init new")
         self.log = logging.getLogger(__name__)
         self.partitionStore = partitionStore
         self.keySlotMapper = keySlotMapper
         self.masterKeySource = masterKeySource
         self.cascadeProperties = cascadeProperties
         self.cascade_lock = Lock()
-        self.log.info(
+        logging.warning(
             "Initialized new Key Cascade: {} with partitionStore {}, keySlotMapper {}, cascadeProperties {}".format(
                 self, self.partitionStore, self.keySlotMapper, self.cascadeProperties))
 
@@ -93,6 +92,13 @@ class Cascade(object):
             partition.append({"slot": slotInPartition, "objName": objName})
             result[objKeyPartition] = partition
         return result
+
+    def __assert_key_replace_possible(self):
+        s = self.masterKeySource.get_status_json()
+        if not s["is_unlocked"]:
+            raise SystemError("Master key locked; re-keying not possible")
+        elif not s["is_next_deletable_ready"]:
+            raise SystemError("Next deletable key not ready; re-keying not possible")
 
     ###############################################################################
     # Utility
@@ -214,7 +220,7 @@ class Cascade(object):
             self.__storePartition(partition, partitionKey)
         elif not key and not createIfNotExists:
             raise SystemError('key slot {} in partition {} is empty'.format(localSlot, partitionId))
-        #elif key and createIfNotExists:
+            # elif key and createIfNotExists:
             # If the partition did exist and also had the key, we need to manually release the a-priori lock.
             # In all other cases, the partition was saved above which unlocks implicitly
         #    self.partitionStore.unlockPartition(partitionId)
@@ -250,6 +256,7 @@ class Cascade(object):
             raise ValueError("no obj name supplied")
         self.cascade_lock.acquire()
         try:
+            self.__assert_key_replace_possible()
             self.__secure_delete_top_down(name)
         except Exception as e:
             raise Exception("Secure delete failed. {}".format(e))
@@ -261,6 +268,7 @@ class Cascade(object):
             raise ValueError("no obj name list supplied")
         self.cascade_lock.acquire()
         try:
+            self.__assert_key_replace_possible()
             self.__secure_delete_top_down_batch(names)
         except Exception as e:
             raise Exception("Batched secure delete failed. {}".format(e))
@@ -280,7 +288,7 @@ class Cascade(object):
         slots = [self.keySlotMapper.resetMapping(name) for name in names]
 
         self.log.warning('Cascaded batch re-keying starting. Batch length: {}'.format(len(slots)))
-        self.log.debug('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
+        self.log.info('Cascaded batch re-keying deleting object keys for objects: {} in slots: {}'.format(names, slots))
         oldMasterKey = self.__getCurrentMasterKey()
         newMasterKey = self.__getNewAndReplaceOldMasterKey()
         self.__cascaded_rekey_top_down(oldMasterKey, newMasterKey, 0, slots)

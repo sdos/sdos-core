@@ -29,9 +29,10 @@ from swiftclient.exceptions import ClientException
 
 from mcm.sdos import configuration
 from mcm.sdos.service.Exceptions import HttpError
-from mcm.sdos.service import httpBackend, app, pseudoObjects
+from mcm.sdos.service import httpBackend, app, pseudoObjects, pseudoContainer
 from mcm.sdos.crypto import DataCrypt
 from mcm.sdos.parallelExecution.Pool import SwiftPool, FEPool
+from mcm.sdos.swift.SwiftBackend import SwiftBackend
 
 log = logging.getLogger()
 
@@ -67,7 +68,8 @@ def replaceStorageUrl(swiftResponse):
     if not swiftUrl.startswith(configuration.swift_store_url.format("")):
         raise HttpError("swift returned wrong storage URL")
     swiftAuthName = swiftUrl[len(configuration.swift_store_url.format("")):]
-    swiftResponse['X-Storage-Url'] = configuration.proxy_store_url.format(swiftAuthName)
+    #swiftAuthName = "mcmdemo" # TODO: change for ceph / swift
+    swiftResponse['X-Storage-Url'] = configuration.my_endpoint_store_url.format(swiftAuthName)
 
 
 def replaceStorageUrl_authv2(auth_response):
@@ -82,7 +84,7 @@ def replaceStorageUrl_authv2(auth_response):
     tenant_id = ar["access"]["token"]["tenant"]["id"]
     my_endpoint = [{'adminURL': 'http://129.69.209.131:8080',
                     'region': 'RegionOne',
-                    'publicURL': configuration.proxy_store_url.format(tenant_id),
+                    'publicURL': configuration.my_endpoint_store_url.format(tenant_id),
                     'id': '1dc55ed5c82f4cd9a98d9f059729422f',
                     'internalURL': 'http://129.69.209.131:8080/v1/AUTH_ea012720129645d9b32b23b4af5c154f'
                     }]
@@ -172,7 +174,7 @@ def handle_invalid_usage(e):
     return "{}".format(e), 500
 
 
-@app.route("/auth/v1.0", methods=["GET"])
+@app.route("/auth/1.0", methods=["GET"])
 @log_requests
 def handle_auth():
     """
@@ -251,6 +253,9 @@ def handle_account(thisAuth):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>", methods=["POST", "GET", "PUT", "DELETE", "HEAD"])
 @log_requests
 def handle_container(thisAuth, thisContainer):
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        return "", 200
+
     myUrl = get_proxy_request_url(thisAuth, thisContainer)
     s, h, b = httpBackend.doGenericRequest(method=request.method, reqUrl=myUrl, reqHead=request.headers,
                                            reqArgs=request.args, reqData=request.data)
@@ -266,6 +271,10 @@ def handle_container(thisAuth, thisContainer):
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["GET", "HEAD"])
 @log_requests
 def handle_object_get(thisAuth, thisContainer, thisObject):
+
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        return pseudoContainer.dispatch(thisObject=thisObject)
+
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
@@ -299,17 +308,35 @@ def handle_object_delete(thisAuth, thisContainer, thisObject):
 
     sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
     if (s == 204 and sdos_frontend):
-        sdos_frontend.deleteObject(thisObject, deleteDataObjectInSwift=False)
+        sdos_frontend.deleteObject(thisObject)
     return Response(response=b, status=s, headers=h)
 
 
 @app.route("/v1/AUTH_<thisAuth>/<thisContainer>/<path:thisObject>", methods=["PUT", "POST"])
 @log_requests
 def handle_object_put(thisAuth, thisContainer, thisObject):
+    """
+    upload/update object; C/U (from CRUD) operations
+    we explicitly check the validity of the request
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
+    for pseudo object/pseudo container requests because this otherwise doesn't happen,
+    or happens too late; i.e. after KeyCascade objects were modified. In case of uploads we verify AFTER
+    K.C. operations because the client can just upload the same object again and the "wrongly" assigned key/slot will be re-used
+    :param thisAuth:
+    :param thisContainer:
+    :param thisObject:
+    :return:
+    """
+    thisToken = get_token(request)
+    if thisContainer == pseudoContainer.PSEUDO_CONTAINER_NAME:
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
+        return pseudoContainer.dispatch(thisObject=thisObject, data=request.headers)
+
     myUrl = get_proxy_request_url(thisAuth, thisContainer, thisObject)
-    sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=get_token(request))
+    sdos_frontend = get_sdos_frontend(containerName=thisContainer, swiftTenant=thisAuth, swiftToken=thisToken)
 
     if sdos_frontend and thisObject.startswith(pseudoObjects.PSEUDO_OBJECT_PREFIX):
+        SwiftBackend(tenant=thisAuth, token=thisToken).assert_valid_auth()
         return pseudoObjects.dispatch_put_post(sdos_frontend, thisObject, request.headers)
 
     if (sdos_frontend and len(request.data)):

@@ -19,6 +19,11 @@ import logging
 import io
 
 
+def getSha1Bytes(d):
+	h = hashlib.sha1()
+	h.update(d)
+	return h.digest()
+
 def getSha256(d):
 	h = hashlib.sha256()
 	h.update(d)

@@ -21,7 +21,7 @@ from mcm.sdos.util import treeGeometry
 from sdos.core import CascadeProperties
 from sdos.swift import SwiftBackend
 
-logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
+logging.basicConfig(level=configuration.log_level)
 log = logging.getLogger()
 
 ###############################################################################
@@ -38,11 +38,11 @@ if __name__ == '__main__':
 	frontend = Frontend.SdosFrontend(containerName='sdt1', swiftBackend=sb, cascadeProperties=cp)
 	cascade = frontend.cascade
 
-	print(treeGeometry.get_used_partitions_json(cascade=cascade))
-	print(treeGeometry.get_partition_mapping_json(cascade=cascade))
-	print(treeGeometry.get_cascade_stats_json(cascade=cascade))
+	print(treeGeometry.sdos_used_partitions(cascade=cascade))
+	print(treeGeometry.sdos_partition_mapping(cascade=cascade))
+	print(treeGeometry.sdos_cascade_stats(cascade=cascade))
 	treeGeometry.print_reverse_slot_mapping(cascade=cascade)
-	print(treeGeometry.get_slot_utilization(cascade=cascade))
+	print(treeGeometry.sdos_slot_utilization(cascade=cascade))
 
 
 

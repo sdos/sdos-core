@@ -68,6 +68,10 @@ class SwiftBackend(object):
     def printStatus(self):
         self.log.info('status: ')
 
+    def assert_valid_auth(self):
+        self._assertConnection()
+        self.swiftC.head_account()
+
     def putObject(self, container, name, dataObject, headers={}):
         self.log.debug('putting file to swift: {}'.format(name))
         self._assertConnection()
@@ -117,6 +121,7 @@ class SwiftBackend(object):
             int(t.get("x-container-meta-sdospartitionbits", 0)),
             int(t.get("x-container-meta-sdosheight", 0)),
             t.get("x-container-meta-sdosmasterkey", 0),
-            t.get("x-container-meta-sdosbatchdelete", False) == "True"
+            t.get("x-container-meta-sdosbatchdelete", False) == "True",
+            int(t.get("x-container-meta-sdostpmkeyid", -1))
         )
         return r

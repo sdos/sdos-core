@@ -14,7 +14,7 @@
 
 import logging
 from mcm.sdos.crypto.CryptoLib import CryptoLib
-HEADER = 'SDOS_ENCPART_V1\0'.encode(encoding='utf_8', errors='strict')
+HEADER = 'SDOS_ENCPART_V1_'.encode(encoding='utf_8', errors='strict') #should be 16 bytes long
 
 class PartitionCrypt(object):
 	"""
