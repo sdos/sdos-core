@@ -12,7 +12,7 @@
 	of the MIT license.  See the LICENSE file for details.
 """
 
-import logging, coloredlogs
+import logging, coloredlogs, sys
 from mcm.sdos import configuration
 
 log_format = '%(asctime)s %(module)s %(name)s[%(process)d][%(thread)d] %(levelname)s %(message)s'
@@ -29,5 +29,6 @@ logging.basicConfig(level=configuration.log_level, format=configuration.log_form
 """
 
 logging.error("###############################################################################")
-logging.error("SDOS running")
+logging.error("SDOS service running")
+logging.error(sys.version)
 logging.error("###############################################################################")
