@@ -11,16 +11,18 @@
 	This software may be modified and distributed under the terms
 	of the MIT license.  See the LICENSE file for details.
 """
-import math
 import logging
+import math
 
 
 class CascadeProperties(object):
+    PREFIX_MCM_INTERNAL = '_mcm-internal_{}'
+
     def __init__(self, container_name,
                  partition_bits=8,
                  tree_height=2,
                  master_key_type=None,
-                 tpm_key_id = None,
+                 tpm_key_id=None,
                  use_partition_cache=True,
                  use_batch_delete=False):
         """
@@ -30,11 +32,11 @@ class CascadeProperties(object):
         	BYTES_FOR_NAME_LENGTH = 2  # allows names to be 65536 characters long
         """
         b = int(partition_bits)
-        h = int(tree_height) - 1 # internally we don't count the root
+        h = int(tree_height) - 1  # internally we don't count the root
         self.__validate_properties(b, h)
 
         self.container_name = container_name
-        self.container_name_mgmt = '_mcm-internal_{}'.format(self.container_name)
+        self.container_name_mgmt = self.PREFIX_MCM_INTERNAL.format(self.container_name)
 
         self.master_key_type = master_key_type
         self.use_partition_cache = use_partition_cache

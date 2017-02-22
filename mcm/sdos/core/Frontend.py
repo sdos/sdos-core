@@ -22,14 +22,54 @@
 
 import io
 import logging
-from mcm.sdos.swift import SwiftBackend
-from mcm.sdos.crypto import DataCrypt
-from mcm.sdos.crypto import CryptoLib
-from mcm.sdos.core.KeyCascade import Cascade
+
 from mcm.sdos.core import Mapping, CascadePersistence, MappingPersistence
+from mcm.sdos.core.KeyCascade import Cascade
+from mcm.sdos.crypto import CryptoLib
+from mcm.sdos.crypto import DataCrypt
+from mcm.sdos.swift import SwiftBackend
 from sdos.core import MasterKeySource
 from sdos.core.CascadeProperties import CascadeProperties
 from sdos.core.KeyPartitionCache import KeyPartitionCache
+
+
+###############################################################################
+###############################################################################
+
+
+
+def frontendFactory(swift_backend, container_name):
+    p = swift_backend.get_sdos_properties(container_name)
+    # print(p)
+    if p["sdos_type"] == "sdos":
+        cascadeProperties = CascadeProperties(container_name=container_name,
+                                              partition_bits=p["sdospartitionbits"],
+                                              tree_height=p["sdosheight"],
+                                              master_key_type=p["sdosmasterkey"],
+                                              use_batch_delete=p["sdosbatchdelete"],
+                                              tpm_key_id=p["sdostpmkeyid"])
+        key_source = MasterKeySource.masterKeySourceFactory(
+            swiftBackend=swift_backend,
+            container_name_mgmt=cascadeProperties.container_name_mgmt,
+            keysource_type=cascadeProperties.master_key_type,
+            tpm_key_id=cascadeProperties.tpm_key_id)
+
+        return SdosFrontend(container_name,
+                            swiftBackend=swift_backend,
+                            cascadeProperties=cascadeProperties,
+                            key_source=key_source,
+                            useCache=True)
+
+
+    elif p["sdos_type"] == "crypto":
+        container_name_mgmt = CascadeProperties.PREFIX_MCM_INTERNAL.format(container_name)
+        key_source = MasterKeySource.masterKeySourceFactory(
+            swiftBackend=swift_backend,
+            container_name_mgmt=container_name_mgmt,
+            keysource_type=p["sdosmasterkey"],
+            tpm_key_id=p["sdostpmkeyid"])
+    else:
+        return None
 
 
 class DirectFrontend(object):
@@ -101,7 +141,7 @@ class SdosFrontend(object):
     This frontend implements the SDOS functionality
     """
 
-    def __init__(self, containerName, swiftBackend, cascadeProperties, useCache=False):
+    def __init__(self, containerName, swiftBackend, cascadeProperties, key_source, useCache=False):
         """
         Constructor
         """
@@ -111,6 +151,7 @@ class SdosFrontend(object):
         self.swift_backend = swiftBackend
         self.cascadeProperties = cascadeProperties
         self.batch_delete_log = set()
+        self.keySource = key_source
 
         # mappingStore = MappingPersistence.LocalFileMappingStore()
         self.mappingStore = MappingPersistence.SwiftMappingStore(
@@ -124,12 +165,6 @@ class SdosFrontend(object):
         self.partitionStore = CascadePersistence.SwiftPartitionStore(
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
             swiftBackend=self.swift_backend)
-
-        self.keySource = MasterKeySource.masterKeySourceFactory(
-            swiftBackend=self.swift_backend,
-            container_name_mgmt=self.cascadeProperties.container_name_mgmt,
-            keysource_type=self.cascadeProperties.master_key_type,
-            tpm_key_id=self.cascadeProperties.tpm_key_id)
 
         if useCache:
             p = KeyPartitionCache(partitionStore=self.partitionStore)
@@ -206,25 +241,5 @@ class SdosFrontend(object):
             raise SystemError("Batch log was restored. {}".format(e))
 
 
-###############################################################################
-###############################################################################
-
-
-
-def frontendFactory(swift_backend, container_name):
-    p = swift_backend.get_sdos_properties(container_name)
-    # print(p)
-    if p["sdos_type"] == "sdos":
-        cascadeProperties = CascadeProperties(container_name=container_name,
-                                              partition_bits=p["sdospartitionbits"],
-                                              tree_height=p["sdosheight"],
-                                              master_key_type=p["sdosmasterkey"],
-                                              use_batch_delete=p["sdosbatchdelete"],
-                                              tpm_key_id=p["sdostpmkeyid"])
-
-        return SdosFrontend(container_name,
-                            swiftBackend=swift_backend,
-                            cascadeProperties=cascadeProperties,
-                            useCache=True)
-    else:
-        return None
+            ###############################################################################
+            ###############################################################################
