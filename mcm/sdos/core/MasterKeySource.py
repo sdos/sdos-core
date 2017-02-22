@@ -89,6 +89,7 @@ class MasterKeyDummy(object):
     my_key_type = "dummy"
 
     def __init__(self):
+        self.swiftBackend=None
         self.get_new_key_and_replace_current()
 
     ###############################################################################

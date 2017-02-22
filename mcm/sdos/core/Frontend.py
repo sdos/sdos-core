@@ -68,6 +68,9 @@ def frontendFactory(swift_backend, container_name):
             container_name_mgmt=container_name_mgmt,
             keysource_type=p["sdosmasterkey"],
             tpm_key_id=p["sdostpmkeyid"])
+        return CryptoFrontend(container_name=container_name,
+                              swift_backend=swift_backend,
+                              key_source=key_source)
     else:
         return None
 
@@ -103,33 +106,53 @@ class DirectFrontend(object):
 
 class CryptoFrontend(object):
     """
-    This frontend encrypts the objects with a predefined key before storing them.
+    This frontend encrypts the objects with a single master key before storing them.
     When retrieving objects, the same key is used to decrypt the data again.
     No key management/SDOS mgmt is performed
     """
 
-    def __init__(self, containerName, swiftTenant=None, swiftToken=None, swiftUser=None, swiftKey=None):
+    def __init__(self, container_name, swift_backend, key_source):
         """
         Constructor
         """
-        self.si = SwiftBackend.SwiftBackend(tenant=swiftTenant, token=swiftToken, user=swiftUser, key=swiftKey)
-        self.containerName = containerName
+        self.container_name = container_name
+        self.swift_backend = swift_backend
+        self.key_source = key_source
+        logging.warning(
+            "Crypto-only frontend initialized with key source {} for container: {}".format(key_source, container_name))
+
+    def refresh_swift_backend(self, swift_backend_new):
+        self.swift_backend = swift_backend_new
+        self.key_source.swiftBackend = swift_backend_new
 
     def finish(self):
         pass
 
-    def putObject(self, o, name):
-        key = CryptoLib.digestKeyString('keeey')
-        c = DataCrypt.DataCrypt(key).encryptBytesIO(plaintext=o)
-        self.si.putObject(self.containerName, name, c)
+    def encrypt_object(self, o, name):
+        key = self.key_source.get_current_key()
+        return DataCrypt.DataCrypt(key).encryptBytesIO(plaintext=o)
 
-    def getObject(self, name):
-        key = CryptoLib.digestKeyString('keeey')
-        c = self.si.getObject(container=self.containerName, name=name)
+    def encrypt_bytes_object(self, o, name):
+        return self.encrypt_object(o=io.BytesIO(o), name=name).read()
+
+    def putObject(self, o, name):
+        c = self.encrypt_object(o=o, name=name)
+        self.swift_backend.putObject(self.containerName, name, c,
+                                     headers={"X-Object-Meta-MCM-Content": DataCrypt.HEADER})
+
+    def decrypt_object(self, c, name):
+        key = self.key_source.get_current_key()
         return DataCrypt.DataCrypt(key).decryptBytesIO(ciphertext=c)
 
+    def decrypt_bytes_object(self, c, name):
+        return self.decrypt_object(io.BytesIO(c), name).read()
+
+    def getObject(self, name):
+        c = self.swift_backend.getObject(container=self.containerName, name=name)
+        return self.decrypt_object(c, name)
+
     def deleteObject(self, name):
-        self.si.deleteObject(container=self.containerName, name=name)
+        pass
 
 
 ###############################################################################
