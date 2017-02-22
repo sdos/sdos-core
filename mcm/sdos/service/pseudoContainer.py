@@ -46,6 +46,14 @@ def extract_passphrase(msg):
         return None
 
 
+def __handle_no_tpm():
+    """
+
+    :return:
+    """
+    t = "TPM lib not installed, no TPM support available."
+    return Response(t, status=200, mimetype="text/plain")
+
 def dispatch(thisObject, data=None):
     logging.debug("request for MCM pseudo container: {}, data: {}".format(thisObject, data))
     is_operation = lambda name: (thisObject == name)
@@ -54,12 +62,18 @@ def dispatch(thisObject, data=None):
         # TPM integration
         ###############################################################################
         if is_operation("tpm_status"):
+            if not TpmLib:
+                return __handle_no_tpm()
             return Response(response=TpmLib().get_status(), status=200,
                             mimetype="text/plain")
         elif is_operation("tpm_unlock"):
+            if not TpmLib:
+                return __handle_no_tpm()
             return Response(response=TpmLib().unlock(extract_passphrase(data)), status=200,
                             mimetype="text/plain")
         elif is_operation("tpm_lock"):
+            if not TpmLib:
+                return __handle_no_tpm()
             return Response(response=TpmLib().lock(), status=200,
                             mimetype="text/plain")
         ###############################################################################
