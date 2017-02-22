@@ -30,5 +30,5 @@ logging.basicConfig(level=configuration.log_level, format=configuration.log_form
 
 logging.error("###############################################################################")
 logging.error("SDOS service running")
-logging.error(sys.version)
+logging.error("Python {}".format(sys.version))
 logging.error("###############################################################################")
