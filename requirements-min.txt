@@ -2,4 +2,3 @@ coloredlogs
 flask
 python-swiftclient
 pycrypto
-git+https://github.com/brandhsn/python-tss.git

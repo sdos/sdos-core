@@ -23,7 +23,12 @@ import logging
 from flask import Response
 
 from mcm.sdos.service.Exceptions import HttpError
-from mcm.sdos.util.tpmLib import TpmLib
+
+try:
+    from mcm.sdos.util.tpmLib import TpmLib
+except ImportError:
+    logging.exception("unable to import TPM lib, TPM functions will not be available")
+    TpmLib = None
 
 PSEUDO_CONTAINER_NAME = "__mcm-pseudo-container__"
 PASSPHRASEFIELD = 'x-object-meta-passphrase'
@@ -41,7 +46,7 @@ def extract_passphrase(msg):
         return None
 
 
-def dispatch(thisObject, data = None):
+def dispatch(thisObject, data=None):
     logging.debug("request for MCM pseudo container: {}, data: {}".format(thisObject, data))
     is_operation = lambda name: (thisObject == name)
     try:

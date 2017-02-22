@@ -17,7 +17,6 @@ import logging
 from swiftclient import ClientException
 from sdos.crypto import CryptoLib
 from sdos.crypto.DataCrypt import DataCrypt
-from mcm.sdos.util.tpmLib import TpmLib
 
 OUTERHEADER = 'SDOS_MKEY_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
 KEYOBJNAME = 'masterkey.sdos'
@@ -71,13 +70,13 @@ class MasterKeyDummy(object):
     ###############################################################################
     def get_current_key(self):
         return self.plainMasterKey
-        #return CryptoLib.digestKeyString("hallo")
+        # return CryptoLib.digestKeyString("hallo")
 
     def get_new_key_and_replace_current(self):
         self.plainMasterKey = CryptoLib.generateRandomKey()
         self.plainMasterKeyBackup = self.plainMasterKey
         return self.plainMasterKey
-        #return CryptoLib.digestKeyString("hallo")
+        # return CryptoLib.digestKeyString("hallo")
 
     ###############################################################################
     # API for Swift/Bluebox
@@ -101,6 +100,7 @@ class MasterKeyDummy(object):
 
     def unlock_key(self, passphrase=None):
         self.plainMasterKey = self.plainMasterKeyBackup
+
 
 ###############################################################################
 ###############################################################################
@@ -256,6 +256,7 @@ class MasterKeyPassphrase(object):
         except:
             raise KeyError("wrong passphrase. Failed decrypting master key")
 
+
 ###############################################################################
 ###############################################################################
 # tpm key source
@@ -265,13 +266,19 @@ class MasterKeyPassphrase(object):
 ###############################################################################
 class MasterKeyTPM(object):
     my_key_type = "tpm"
+
     def __init__(self, cascadeProperties, swiftBackend):
         self.cascadeProperties = cascadeProperties
         self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
         self.keyId = self.cascadeProperties.tpm_key_id
-        self.tpm = TpmLib()
+        try:
+            from sdos.util.tpmLib import TpmLib
+            self.tpm = TpmLib()
+        except ImportError:
+            logging.exception("unable to import TPM lib, TPM functions will not be available")
+            self.tpm = None
         try:
             self.unlock_key()
         except:
@@ -287,14 +294,14 @@ class MasterKeyTPM(object):
         return self.plainMasterKey
 
     def get_new_key_and_replace_current(self, first_run=False):
-        #if not self.next_deletable:
-            #raise KeyError("can't replace current master key without new wrapping (deletable) key")
+        # if not self.next_deletable:
+        # raise KeyError("can't replace current master key without new wrapping (deletable) key")
         if not first_run and not self.plainMasterKey:
             raise KeyError("not allowed while current master is locked")
         new_master = CryptoLib.generateRandomKey()
         next_deletable = self.tpm.get_new_key_and_replace_current(self.keyId, first_run=first_run)
         wrapped_key = io.BytesIO(next_deletable.bind(new_master))
-        #TODO ADD key id to store_wrapped_key?
+        # TODO ADD key id to store_wrapped_key?
 
         store_wrapped_key(containerNameSdosMgmt=self.containerNameSdosMgmt, swiftBackend=self.swiftBackend,
                           wrapped_key=wrapped_key)
@@ -334,7 +341,6 @@ class MasterKeyTPM(object):
             self.plainMasterKey = bytes(deletable.unbind(by.read()))
         except:
             raise KeyError("TPM Error. Failed decrypting master key")
-
 
 
 ###############################################################################
