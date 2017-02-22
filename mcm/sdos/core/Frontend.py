@@ -42,12 +42,14 @@ def frontendFactory(swift_backend, container_name):
     p = swift_backend.get_sdos_properties(container_name)
     # print(p)
     if p["sdos_type"] == "sdos":
+
         cascadeProperties = CascadeProperties(container_name=container_name,
                                               partition_bits=p["sdospartitionbits"],
                                               tree_height=p["sdosheight"],
                                               master_key_type=p["sdosmasterkey"],
                                               use_batch_delete=p["sdosbatchdelete"],
                                               tpm_key_id=p["sdostpmkeyid"])
+        swift_backend.create_container_if_not_exists(cascadeProperties.container_name_mgmt)
         key_source = MasterKeySource.masterKeySourceFactory(
             swiftBackend=swift_backend,
             container_name_mgmt=cascadeProperties.container_name_mgmt,
@@ -63,6 +65,7 @@ def frontendFactory(swift_backend, container_name):
 
     elif p["sdos_type"] == "crypto":
         container_name_mgmt = CascadeProperties.PREFIX_MCM_INTERNAL.format(container_name)
+        swift_backend.create_container_if_not_exists(container_name_mgmt)
         key_source = MasterKeySource.masterKeySourceFactory(
             swiftBackend=swift_backend,
             container_name_mgmt=container_name_mgmt,
@@ -74,6 +77,9 @@ def frontendFactory(swift_backend, container_name):
     else:
         return None
 
+
+###############################################################################
+###############################################################################
 
 class DirectFrontend(object):
     """
