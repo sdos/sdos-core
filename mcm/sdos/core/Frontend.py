@@ -125,8 +125,11 @@ class SdosFrontend(object):
             containerNameSdosMgmt=self.cascadeProperties.container_name_mgmt,
             swiftBackend=self.swift_backend)
 
-        self.keySource = MasterKeySource.masterKeySourceFactory(cascadeProperties=cascadeProperties,
-                                                                swiftBackend=self.swift_backend)
+        self.keySource = MasterKeySource.masterKeySourceFactory(
+            swiftBackend=self.swift_backend,
+            container_name_mgmt=self.cascadeProperties.container_name_mgmt,
+            keysource_type=self.cascadeProperties.master_key_type,
+            tpm_key_id=self.cascadeProperties.tpm_key_id)
 
         if useCache:
             p = KeyPartitionCache(partitionStore=self.partitionStore)

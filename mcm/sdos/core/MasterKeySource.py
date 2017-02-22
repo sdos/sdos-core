@@ -24,6 +24,34 @@ KEYOBJNAME = 'masterkey.sdos'
 
 ###############################################################################
 ###############################################################################
+# factory
+###############################################################################
+###############################################################################
+
+def masterKeySourceFactory(swiftBackend, keysource_type, container_name_mgmt, tpm_key_id=None):
+    """
+    select and initialize on of the key sources
+    :param swiftBackend:
+    :param keysource_type:
+    :param container_name_mgmt:
+    :param tpm_key_id:
+    :return:
+    """
+
+    if keysource_type == MasterKeyDummy.my_key_type:
+        return MasterKeyDummy()
+    elif keysource_type == MasterKeyStatic.my_key_type:
+        return MasterKeyStatic(swiftBackend=swiftBackend, container_name_mgmt=container_name_mgmt)
+    elif keysource_type == MasterKeyPassphrase.my_key_type:
+        return MasterKeyPassphrase(swiftBackend=swiftBackend, container_name_mgmt=container_name_mgmt)
+    elif keysource_type == MasterKeyTPM.my_key_type:
+        return MasterKeyTPM(swiftBackend=swiftBackend, container_name_mgmt=container_name_mgmt, tpm_key_id=tpm_key_id)
+    else:
+        raise TypeError("could not create master key source. type missing or wrong: {}".format(keysource_type))
+
+
+###############################################################################
+###############################################################################
 # master key load/store
 ###############################################################################
 ###############################################################################
@@ -60,9 +88,7 @@ def store_wrapped_key(containerNameSdosMgmt, swiftBackend, wrapped_key):
 class MasterKeyDummy(object):
     my_key_type = "dummy"
 
-    def __init__(self, cascadeProperties, swiftBackend):
-        self.cascadeProperties = cascadeProperties
-        self.swiftBackend = swiftBackend
+    def __init__(self):
         self.get_new_key_and_replace_current()
 
     ###############################################################################
@@ -112,9 +138,8 @@ class MasterKeyStatic(object):
     STATIC_KEY = CryptoLib.digestKeyString('ALWAYS_THE_SAME')
     my_key_type = "static"
 
-    def __init__(self, cascadeProperties, swiftBackend):
-        self.cascadeProperties = cascadeProperties
-        self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
+    def __init__(self, swiftBackend, container_name_mgmt):
+        self.containerNameSdosMgmt = container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
         try:
@@ -186,9 +211,8 @@ class MasterKeyStatic(object):
 class MasterKeyPassphrase(object):
     my_key_type = "passphrase"
 
-    def __init__(self, cascadeProperties, swiftBackend):
-        self.cascadeProperties = cascadeProperties
-        self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
+    def __init__(self, swiftBackend, container_name_mgmt):
+        self.containerNameSdosMgmt = container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
         self.next_deletable = None
@@ -267,12 +291,12 @@ class MasterKeyPassphrase(object):
 class MasterKeyTPM(object):
     my_key_type = "tpm"
 
-    def __init__(self, cascadeProperties, swiftBackend):
-        self.cascadeProperties = cascadeProperties
-        self.containerNameSdosMgmt = self.cascadeProperties.container_name_mgmt
+    def __init__(self, swiftBackend, container_name_mgmt, tpm_key_id):
+        self.containerNameSdosMgmt = container_name_mgmt
         self.swiftBackend = swiftBackend
         self.plainMasterKey = None
-        self.keyId = self.cascadeProperties.tpm_key_id
+        self.keyId = tpm_key_id
+        assert (self.keyId > 0)
         try:
             from sdos.util.tpmLib import TpmLib
             self.tpm = TpmLib()
@@ -341,23 +365,3 @@ class MasterKeyTPM(object):
             self.plainMasterKey = bytes(deletable.unbind(by.read()))
         except:
             raise KeyError("TPM Error. Failed decrypting master key")
-
-
-###############################################################################
-###############################################################################
-# factory
-###############################################################################
-###############################################################################
-known_sources = {
-    MasterKeyDummy.my_key_type: MasterKeyDummy,
-    MasterKeyStatic.my_key_type: MasterKeyStatic,
-    MasterKeyPassphrase.my_key_type: MasterKeyPassphrase,
-    MasterKeyTPM.my_key_type: MasterKeyTPM
-}
-
-
-def masterKeySourceFactory(cascadeProperties, swiftBackend):
-    t = cascadeProperties.master_key_type
-    if not t in known_sources:
-        raise TypeError("could not create master key source. type missing or wrong")
-    return known_sources[t](cascadeProperties, swiftBackend)
