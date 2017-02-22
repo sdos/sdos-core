@@ -27,3 +27,7 @@ coloredlogs.install(level=configuration.log_level, fmt=log_format, field_styles=
 """
 logging.basicConfig(level=configuration.log_level, format=configuration.log_format)
 """
+
+logging.error("###############################################################################")
+logging.error("SDOS running")
+logging.error("###############################################################################")
