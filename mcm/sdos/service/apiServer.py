@@ -175,6 +175,7 @@ def handle_invalid_usage(e):
 
 
 @app.route("/auth/1.0", methods=["GET"])
+@app.route("/auth/v1.0", methods=["GET"])
 @log_requests
 def handle_auth():
     """
