@@ -69,15 +69,15 @@ swift_auth_port = os.getenv("SWIFT_AUTH_PORT", 8080)
 #swift_auth_port = 5000
 
 
-# v1 swift auth
-swift_auth_url = "http://{}:{}/auth/v1.0".format(swift_auth_host, swift_auth_port)
+swift_auth_version = swift_auth_version = os.getenv("SWIFT_AUTH_VERSION", "1.0")
 
-# v2 keystone auth
-#swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
 
-# v1 CEPH auth
-#swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port)
-
+if swift_auth_version == "1.0":
+    swift_auth_url = "http://{}:{}/auth/v1.0".format(swift_auth_host, swift_auth_port)
+elif swift_auth_version == "2.0":
+    swift_auth_url = "http://{}:{}/v2.0/tokens".format(swift_auth_host, swift_auth_port)
+elif swift_auth_version == "ceph":
+    swift_auth_url = "http://{}:{}/auth/1.0".format(swift_auth_host, swift_auth_port)
 
 
 """
@@ -93,8 +93,7 @@ swift_store_port = os.getenv("SWIFT_STORE_PORT", 8080)
 #swift_store_host = "129.69.209.131"
 #swift_store_port = 8080
 
-# openstack Swift
-swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
-
-# CEPH on port :80
-#swift_store_url = "http://{}/swift/v1".format(swift_store_host)
+if swift_auth_version == "1.0" or swift_auth_version == "2.0":
+    swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
+elif swift_auth_version == "ceph":
+    swift_store_url = "http://{}/swift/v1".format(swift_store_host)
