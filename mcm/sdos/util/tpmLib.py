@@ -234,6 +234,6 @@ class TpmLib(Borg):
                 algsxor,
                 algsaes))
         flags = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_FLAG, 0)).decode("ascii")
-        statusStr += (", \nFlags={}".format(flags))
+        statusStr += (", \nFlags={}".format(swapEndianess(flags)))
         statusStr += ", \nRegisteredKeys={}".format(self.get_registered_keys())
         return statusStr
