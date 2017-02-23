@@ -191,12 +191,11 @@ def handle_auth():
     """
     clientHeaders = request.headers
     swiftStatus, swiftHeaders, swiftBody = httpBackend.doAuthGetToken(reqHead=clientHeaders, method="GET")
-    log.debug("swift response: {}".format(swiftHeaders))
-    replaceStorageUrl(swiftResponse=swiftHeaders)
-    log.debug("proxy response: {}".format(swiftHeaders))
-    r = Response(response="", status=swiftStatus)
-    r.headers = swiftHeaders
-    return r
+    log.debug("swift response: {} {} {}".format(swiftStatus, swiftHeaders, swiftBody))
+    if 200 == swiftStatus:
+        replaceStorageUrl(swiftResponse=swiftHeaders)
+        log.debug("proxy response: {} {} {}".format(swiftStatus, swiftHeaders, swiftBody))
+    return Response(status=swiftStatus, headers=swiftHeaders, response=swiftBody)
 
 
 @app.route("/v2.0/tokens", methods=["POST"])
