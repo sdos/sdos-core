@@ -218,12 +218,12 @@ def handle_auth_v2():
     clientBody = request.data
     swiftStatus, swiftHeaders, swiftBody = httpBackend.doAuthGetToken(reqHead=clientHeaders, method="POST",
                                                                       data=clientBody)
-    log.debug("swift response: {} --BODY-- {}".format(swiftHeaders, swiftBody))
-    proxyResponse = replaceStorageUrl_authv2(swiftBody)
-    log.debug("proxy response body: {}".format(proxyResponse))
-    r = Response(response=json.dumps(proxyResponse), status=swiftStatus)
-    return r
-
+    log.debug("swift response: {} {} --BODY-- {}".format(swiftStatus, swiftHeaders, swiftBody))
+    if 200 == swiftStatus:
+        proxyResponse = replaceStorageUrl_authv2(swiftBody)
+        log.debug("proxy response body: {}".format(proxyResponse))
+        return Response(response=json.dumps(proxyResponse), status=swiftStatus)
+    return Response(status=swiftStatus, headers=swiftHeaders, response=swiftBody)
 
 ##############################################################################
 # API functions
