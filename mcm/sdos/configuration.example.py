@@ -60,8 +60,13 @@ Swift backend - auth API endpoint
 ################################################################################
 """
 
+# env-vars or localhost docker container
 swift_auth_host = os.getenv("SWIFT_AUTH_HOST", "localhost")
 swift_auth_port = os.getenv("SWIFT_AUTH_PORT", 8080)
+
+# asflex swift
+#swift_auth_host = "129.69.209.131"
+#swift_auth_port = 5000
 
 
 # v1 swift auth
@@ -80,11 +85,13 @@ swift_auth_url = "http://{}:{}/auth/v1.0".format(swift_auth_host, swift_auth_por
 Swift backend - store API endpoint
 ################################################################################
 """
-
-# docker CEPH
+# env-vars or localhost docker container
 swift_store_host = os.getenv("SWIFT_STORE_HOST", "localhost")
 swift_store_port = os.getenv("SWIFT_STORE_PORT", 8080)
-#enigma ssh tunnel
+
+# asflex swift
+#swift_store_host = "129.69.209.131"
+#swift_store_port = 8080
 
 # openstack Swift
 swift_store_url = "http://{}:{}/v1/AUTH_{}".format(swift_store_host, swift_store_port, "{}")
