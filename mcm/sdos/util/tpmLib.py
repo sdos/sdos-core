@@ -21,6 +21,8 @@ from mcm.sdos.parallelExecution import Borg
 from pytss import *
 from pytss.tspi_defines import *
 
+def swapEndianess(hexStr):
+    return struct.unpack("<I", struct.pack(">I", int(hexStr,16)))[0]
 
 class TpmLib(Borg):
     srk_uuid = uuid.UUID('{00000000-0000-0000-0000-000000000001}')
@@ -194,13 +196,13 @@ class TpmLib(Borg):
         maxNVavail = binascii.hexlify(
             tpm.get_capability(tss_lib.TSS_TPMCAP_PROPERTY, tss_lib.TSS_TPMCAP_PROP_MAXNVAVAILABLE)).decode("ascii")
         statusStr += (
-            "KeySlots={}, \nMaxKeys={}, \nMaxSess={}, \nMaxContexts={}, \nInputBufferSize={}, \nMaxNVSpace={}".format(
-                maxkeyslots,
-                maxKeys,
-                maxSess,
-                maxContexts,
-                maxInputBuffer,
-                maxNVavail))
+            "KeySlots={}, \nMaxKeys={}, \nMaxSess={}, \nMaxContexts={}, \nInputBufferSize={}B, \nMaxNVSpace={}B".format(
+                swapEndianess(maxkeyslots),
+                swapEndianess(maxKeys),
+                swapEndianess(maxSess),
+                swapEndianess(maxContexts),
+                swapEndianess(maxInputBuffer),
+                swapEndianess(maxNVavail)))
 
         # nvIndices=binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_NV_LIST,0)).decode("ascii")
         algsrsa = binascii.hexlify(tpm.get_capability(tss_lib.TSS_TPMCAP_ALG, tss_lib.TSS_ALG_RSA)).decode("ascii")
