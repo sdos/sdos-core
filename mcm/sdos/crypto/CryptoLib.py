@@ -55,7 +55,9 @@ def _unpadBytesIO(d):
 
 class CryptoLib(object):
 	"""
-	classdocs
+	The resulting encrypted data looks like this
+
+	<header:plain><init-vector:plain><header:enc><data...:enc>
 	"""
 
 	def __init__(self, key = "", outerHeader = b""):

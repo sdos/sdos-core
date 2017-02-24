@@ -64,7 +64,10 @@ class LocalFilePartitionStore(object):
 
     def __init__(self):
         """
-        Constructor
+        The stored objects/bytes look like
+
+        <header>{encrypted data}
+            encrypted data format see CryptoLib.py
         """
         self.log = logging.getLogger(__name__)
         self.outerHeader = 'SDOS_PART_V1\0\0\0\0'.encode(encoding='utf_8', errors='strict')  # should be 16 bytes long
