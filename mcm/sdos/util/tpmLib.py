@@ -22,7 +22,11 @@ from pytss import *
 from pytss.tspi_defines import *
 
 def swapEndianess(hexStr):
-    return struct.unpack("<I", struct.pack(">I", int(hexStr,16)))[0]
+    try:
+        s = struct.unpack("<I", struct.pack(">I", int(hexStr,16)))[0]
+        return s
+    except:
+        return hexStr
 
 class TpmLib(Borg):
     srk_uuid = uuid.UUID('{00000000-0000-0000-0000-000000000001}')
