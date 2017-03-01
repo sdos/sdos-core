@@ -2,3 +2,5 @@ coloredlogs
 flask
 python-swiftclient
 pycrypto
+gunicorn
+gevent
