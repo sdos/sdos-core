@@ -4,3 +4,4 @@ python-swiftclient
 pycrypto
 gunicorn
 gevent
+meinheld
