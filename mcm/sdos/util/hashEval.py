@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
 if __name__ == 'mm__main__':
     p = sdos.core.KeyPartition.KeyPartition(0)
-    p.print()
+    p.print_partition()
 
 """
 def insertNewObjectKey(ids, key, partitionStore):

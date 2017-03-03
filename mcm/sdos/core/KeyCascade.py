@@ -159,7 +159,7 @@ class Cascade(object):
     def __storePartition(self, partition, key):
         self.log.info('storing partition {}'.format(partition.getId()))
         if (configuration.log_level == logging.DEBUG):
-            partition.print()
+            partition.print_partition()
         pc = PartitionCrypt(key)
         by = pc.encryptBytesIO(partition.serializeToBytesIO())
         self.partitionStore.writePartition(partition.getId(), by)

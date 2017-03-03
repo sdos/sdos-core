@@ -34,7 +34,7 @@ class KeyPartition(object):
         self.keys = [self.EMPTY_KEY] * self.cascadeProperties.PARTITION_SIZE
         self.partitionID = partitionId
 
-    def print(self):
+    def print_partition(self):
         print()
         print('+' + '----' * 32 + '+')
         print('| SDOS key partition - PartitionID: %s' % (self.partitionID))

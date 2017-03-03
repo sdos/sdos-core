@@ -41,13 +41,6 @@ class MemoryBackedPartitionStore(object):
             return None
         return io.BytesIO(self.partitions[partitionId])
 
-    # defunct
-    def print(self):
-        print('PartitionStore printing content...')
-        print(self.partitions)
-        for v in self.partitions:
-            self.partitions[v].print()
-
     def printLen(self):
         print("Partition count: %i" % (len(self.partitions)))
 
@@ -91,10 +84,6 @@ class LocalFilePartitionStore(object):
             return by
         except FileNotFoundError:
             return None
-
-    # defunct
-    def print(self):
-        print('PartitionStore iteration not possible')
 
     def printLen(self):
         print("Partition count: %i" % (len(self.partitions)))
@@ -140,10 +129,6 @@ class SwiftPartitionStore(object):
         by = io.BytesIO(obj.read())
         obj.close()
         return by
-
-    # defunct
-    def print(self):
-        print('PartitionStore iteration not possible')
 
     def printLen(self):
         print("Partition count unknown")
