@@ -1,20 +1,17 @@
-# MCM-SDOS
-The Secure Delete Object Store - part of the Micro Content Management system (MCM)
+# SDOS
+The Secure Delete Object Store
 ![Key Cascade](doc/1.png)
 
-MCM consists of multiple components that form a small experimental content management system.
 
 The Secure Delete Object Store (SDOS) implements a key management mechanism that enables cryptographic deletion of objects. 
-SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. SDOS can be used with any unmodified Swift client and server.
-
-### The other parts of the MCM project are
-* [-- Deploy Environment (set up everything) --](https://github.com/timwaizenegger/mcm-deployEnvironment)
-* [Bluebox web-UI](https://github.com/timwaizenegger/mcm-bluebox)
-* [SDOS (Secure Delete Object Store) Cryptographic Deletion](https://github.com/timwaizenegger/mcm-sdos)
-* [Metadata Extractor](https://github.com/timwaizenegger/mcm-metadataExtractor)
-* [Retention Manager](https://github.com/timwaizenegger/mcm-retentionManager)
+SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. 
+SDOS can be used with any unmodified Swift client and server.
 
 
+# demo-deployment
+deployment automation for the whole system can be found at:
+
+[https://github.com/sdos/deploy-sdos](https://github.com/sdos/deploy-sdos)
 
 
 # Features
