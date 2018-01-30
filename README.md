@@ -7,6 +7,9 @@ The Secure Delete Object Store (SDOS) implements a key management mechanism that
 SDOS is implemented as an API proxy for the Swift object store from the OpenStack project. 
 SDOS can be used with any unmodified Swift client and server.
 
+# Read the PDF
+You can find a lot of details about the concepts, as well as about the implementation, in my Dissertation: 
+[https://elib.uni-stuttgart.de/handle/11682/9588](https://elib.uni-stuttgart.de/handle/11682/9588)
 
 # demo-deployment
 deployment automation for the whole system can be found at:
