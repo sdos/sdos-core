@@ -9,7 +9,7 @@ SDOS can be used with any unmodified Swift client and server.
 
 # Read the PDF
 You can find a lot of details about the concepts, as well as about the implementation, in my Dissertation: 
-[https://elib.uni-stuttgart.de/handle/11682/9588](https://elib.uni-stuttgart.de/handle/11682/9588)
+[http://dx.doi.org/10.18419/opus-9571](http://dx.doi.org/10.18419/opus-9571)
 
 # demo-deployment
 deployment automation for the whole system can be found at:
