@@ -1,7 +1,8 @@
-coloredlogs
-flask
-python-swiftclient
+coloredlogs==5.2
+flask==0.12
+python-swiftclient==3.3.0
 pycrypto
-gunicorn
-gevent
+gunicorn==19.6.0
+gevent==1.2.1
 meinheld
+#pytss
