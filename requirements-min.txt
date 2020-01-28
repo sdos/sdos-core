@@ -1,5 +1,5 @@
 coloredlogs==5.2
-flask==0.12
+flask==1.0
 python-swiftclient==3.3.0
 pycrypto
 gunicorn==19.6.0
